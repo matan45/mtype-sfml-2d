@@ -1,0 +1,14 @@
+<Project Name="sfml-2d" Version="1.0.0">
+  <Source>
+    <Include>src/**/*.mt</Include>
+  </Source>
+  <Output Directory="build" />
+  <Imports>
+  </Imports>
+  <Dependencies>
+      <Package Name="mTypeLib" Version="0.0.1" Source="github:matan45/mTypeLib" />
+      <Package Name="mtype-sfml" Version="0.0.1" Source="github:matan45/mtype-sfml" />
+      <Package Name="mtype-box2d" Version="0.0.1" Source="github:matan45/mtype-box2d" />
+      <Package Name="mtype-entt" Version="0.0.1" Source="github:matan45/mtype-entt" />
+  </Dependencies>
+</Project>

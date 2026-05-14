@@ -1,0 +1,25 @@
+{
+    "packages": {
+        "mTypeLib": {
+            "integrity": "sha256-54c81e6ddaabfc8781ee3395606acdf0a207addb1dc8d21eb573e1ad69026263",
+            "resolved": "file://C:\\Users\\matan\\.mtype\\registry\\mTypeLib\\0.0.1",
+            "version": "0.0.1"
+        },
+        "mtype-box2d": {
+            "integrity": "sha256-2bfd7ff3d970baafd219baed75a79b2098b9becb2cfbadfd375d71ff296d2826",
+            "resolved": "file://C:\\Users\\matan\\.mtype\\registry\\mtype-box2d\\0.0.1",
+            "version": "0.0.1"
+        },
+        "mtype-entt": {
+            "integrity": "sha256-d3494aaafa42033b90c98f95ccf50fb8f740276fb8d074892cd4f8812a57bb46",
+            "resolved": "file://C:\\Users\\matan\\.mtype\\registry\\mtype-entt\\0.0.1",
+            "version": "0.0.1"
+        },
+        "mtype-sfml": {
+            "integrity": "sha256-5aa0c23dd096eddb6d61c13b588295f8e382528fb01b1d9b83ca5e8ca67b8de1",
+            "resolved": "file://C:\\Users\\matan\\.mtype\\registry\\mtype-sfml\\0.0.1",
+            "version": "0.0.1"
+        }
+    },
+    "version": 1
+}
