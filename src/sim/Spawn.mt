@@ -61,6 +61,68 @@ class Spawn {
         return e;
     }
 
+    // Create a PLAYER grunt at (x, y). Same shape & combat stats as the
+    // enemy grunt, but PlayerControlled + Selectable, and its sensor scans
+    // for enemies instead of players.
+    public static function playerGrunt(Registry reg, World world, float x, float y): int {
+        int e = reg.create();
+
+        BodyDef bd = new BodyDef();
+        bd.setType(BodyType::dynamicBody());
+        bd.setPosition(x, y);
+        bd.setFixedRotation(true);
+        bd.setLinearDamping(8.0);
+        Body b = Bodies::create(world, bd);
+        bd.destroy();
+        b.setUserDataInt(e);
+
+        ShapeDef sd = new ShapeDef();
+        sd.setDensity(1.2);
+        sd.setFriction(0.3);
+        sd.setFilter(Cat::unitPlayer(), Cat::unitMask(), 0);
+        Shape sh = Shapes::createCircle(b, sd, GameConst::gruntRadius(), 0.0, 0.0);
+        sd.destroy();
+
+        ShapeDef sdS = new ShapeDef();
+        sdS.setDensity(0.0);
+        sdS.setIsSensor(true);
+        sdS.enableSensorEvents(true);
+        sdS.setFilter(Cat::sensor(), Cat::unitEnemy(), 0);
+        Shape sens = Shapes::createCircle(b, sdS,
+                                           GameConst::gruntRange() + GameConst::gruntSensorPad(),
+                                           0.0, 0.0);
+        sdS.destroy();
+
+        PhysicsBody pb = new PhysicsBody();
+        pb.bodyHandle = b.handle;
+        reg.emplace(e, "PhysicsBody", pb);
+
+        Unit u = new Unit();
+        u.kind = UnitKind::grunt();
+        u.faction = Faction::player();
+        u.hp = GameConst::gruntHp();
+        u.maxHp = GameConst::gruntHp();
+        u.radius = GameConst::gruntRadius();
+        u.speed = GameConst::gruntSpeed();
+        u.attackRange = GameConst::gruntRange();
+        u.attackDamage = GameConst::gruntDamage();
+        u.attackCooldown = GameConst::gruntCooldown();
+        u.cooldownLeft = 0.0;
+        reg.emplace(e, "Unit", u);
+
+        Selectable sel = new Selectable();
+        sel.radius = GameConst::gruntRadius() + 0.3;
+        reg.emplace(e, "Selectable", sel);
+
+        RangeSensor rs = new RangeSensor();
+        rs.sensorShapeHandle = sens.handle;
+        reg.emplace(e, "RangeSensor", rs);
+
+        reg.emplaceTag(e, "PlayerControlled");
+        reg.emplaceTag(e, "Grunt");
+        return e;
+    }
+
     // Create an enemy grunt at (x, y). Dynamic body + circle hard shape +
     // larger circle sensor for target acquisition.
     public static function grunt(Registry reg, World world, float x, float y): int {

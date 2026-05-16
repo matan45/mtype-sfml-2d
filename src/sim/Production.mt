@@ -28,7 +28,7 @@ class Production {
                         b.buildLeft = 0.0;
                     }
                     if (b.kind == BuildingKind::barracks()) {
-                        Spawn::grunt(reg, world, b.rallyX, b.rallyY);
+                        Spawn::playerGrunt(reg, world, b.rallyX, b.rallyY);
                     } else {
                         Spawn::worker(reg, world, b.rallyX, b.rallyY);
                     }
