@@ -88,8 +88,8 @@ class Placement {
             float hw = GameConst::barracksHalfW();
             float hh = GameConst::barracksHalfH();
             if (pls.kind == BuildingKind::commandCenter()) {
-                hw = GameConst::baseHalfW();
-                hh = GameConst::baseHalfH();
+                hw = GameConst::commandCenterHalfW();
+                hh = GameConst::commandCenterHalfH();
             }
             pls.snapX = wx;
             pls.snapY = wy;

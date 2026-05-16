@@ -70,8 +70,4 @@ class Production {
         return true;
     }
 
-    // Back-compat wrapper.
-    public static function tryQueueWorker(Registry reg, int baseEntity): bool {
-        return Production::tryQueueUnit(reg, baseEntity);
-    }
 }

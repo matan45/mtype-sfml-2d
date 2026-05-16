@@ -35,7 +35,6 @@ class UnitKind {
 }
 
 class BuildingKind {
-    public static function base():          int { return 1; }
     public static function barracks():      int { return 2; }
     public static function refinery():      int { return 3; }
     public static function commandCenter(): int { return 4; }
@@ -66,11 +65,11 @@ class GameConst {
     public static function gruntCooldown():   float { return 1.0; }
     public static function gruntSensorPad():  float { return 4.0; }
 
-    public static function baseHalfW():       float { return 2.0; }
-    public static function baseHalfH():       float { return 2.0; }
-    public static function baseHp():          float { return 500.0; }
-    public static function baseRallyDx():     float { return 0.0; }
-    public static function baseRallyDy():     float { return 3.0; }
+    public static function commandCenterHalfW():   float { return 2.0; }
+    public static function commandCenterHalfH():   float { return 2.0; }
+    public static function commandCenterHp():      float { return 500.0; }
+    public static function commandCenterRallyDx(): float { return 0.0; }
+    public static function commandCenterRallyDy(): float { return 3.0; }
 
     public static function barracksHalfW():     float { return 2.0; }
     public static function barracksHalfH():     float { return 2.0; }
@@ -114,7 +113,7 @@ class GameConst {
     public static function buildingHalfExtent(int kind): float {
         if (kind == BuildingKind::barracks()) { return GameConst::barracksHalfW(); }
         if (kind == BuildingKind::refinery()) { return GameConst::refineryHalfW(); }
-        return GameConst::baseHalfW();
+        return GameConst::commandCenterHalfW();
     }
 
     public static function fixedDt():    float { return 0.01666667; }

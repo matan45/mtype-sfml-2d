@@ -224,33 +224,43 @@ class Commands {
                 Body wb = new Body(pb.bodyHandle);
                 float[] wp = wb.position();
                 int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
-                Carrying c = new Carrying();
-                c.amount = 0;
-                c.homeBase = homeE;
-                c.sourceNode = refinery;
-                c.gatherLeft = GameConst::workerGatherTime();
-                c.kind = ResourceKind::gas();
-                reg.emplace(e, "Carrying", c);
-                reg.emplaceTag(e, "Gathering");
-                Body? rb = Commands::bodyOf(reg, refinery);
-                if (rb != null) {
-                    float[] rp = rb.position();
-                    Commands::setMove(reg, e, pb.bodyHandle, rp[0], rp[1], world);
+                if (homeE == 0) {
+                    // No Command Center to drop off at — refuse the order
+                    // and just walk to the cursor.
+                    Commands::setMove(reg, e, pb.bodyHandle, wx, wy, world);
+                } else {
+                    Carrying c = new Carrying();
+                    c.amount = 0;
+                    c.homeBase = homeE;
+                    c.sourceNode = refinery;
+                    c.gatherLeft = GameConst::workerGatherTime();
+                    c.kind = ResourceKind::gas();
+                    reg.emplace(e, "Carrying", c);
+                    reg.emplaceTag(e, "Gathering");
+                    Body? rb = Commands::bodyOf(reg, refinery);
+                    if (rb != null) {
+                        float[] rp = rb.position();
+                        Commands::setMove(reg, e, pb.bodyHandle, rp[0], rp[1], world);
+                    }
                 }
             } else if (mineral != 0 && u.kind == UnitKind::worker()) {
-                ResourceNode rn = (ResourceNode) reg.get(mineral, "ResourceNode");
                 Body wb = new Body(pb.bodyHandle);
                 float[] wp = wb.position();
                 int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
-                Carrying c = new Carrying();
-                c.amount = 0;
-                c.homeBase = homeE;
-                c.sourceNode = mineral;
-                c.gatherLeft = GameConst::workerGatherTime();
-                c.kind = ResourceKind::minerals();
-                reg.emplace(e, "Carrying", c);
-                reg.emplaceTag(e, "Gathering");
-                Commands::setMove(reg, e, pb.bodyHandle, rn.x, rn.y, world);
+                if (homeE == 0) {
+                    Commands::setMove(reg, e, pb.bodyHandle, wx, wy, world);
+                } else {
+                    ResourceNode rn = (ResourceNode) reg.get(mineral, "ResourceNode");
+                    Carrying c = new Carrying();
+                    c.amount = 0;
+                    c.homeBase = homeE;
+                    c.sourceNode = mineral;
+                    c.gatherLeft = GameConst::workerGatherTime();
+                    c.kind = ResourceKind::minerals();
+                    reg.emplace(e, "Carrying", c);
+                    reg.emplaceTag(e, "Gathering");
+                    Commands::setMove(reg, e, pb.bodyHandle, rn.x, rn.y, world);
+                }
             } else {
                 Commands::setMove(reg, e, pb.bodyHandle, wx, wy, world);
             }

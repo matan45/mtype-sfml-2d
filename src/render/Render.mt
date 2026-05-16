@@ -314,8 +314,8 @@ class Render {
                 hw = GameConst::refineryHalfW();
                 hh = GameConst::refineryHalfH();
             } else if (pls.kind == BuildingKind::commandCenter()) {
-                hw = GameConst::baseHalfW();
-                hh = GameConst::baseHalfH();
+                hw = GameConst::commandCenterHalfW();
+                hh = GameConst::commandCenterHalfH();
             }
             RectangleShape r = p.buildingRect;
             r.setSize(hw * 2.0, hh * 2.0);

@@ -157,6 +157,10 @@ class Gather {
             if (c.amount == 0) {
                 // Heading to the source (mineral pile, or refinery for gas).
                 if (!reg.valid(c.sourceNode)) { reg.remove(e, "Carrying"); e = v.next(); continue; }
+                // No base to deposit at → no point gathering. Abort.
+                if (!reg.valid(c.homeBase) || !reg.has(c.homeBase, "Building")) {
+                    reg.remove(e, "Carrying"); e = v.next(); continue;
+                }
 
                 // Resolve gather position and the entity holding the amount.
                 // For minerals, sourceNode IS the ResourceNode entity.

@@ -87,7 +87,7 @@ class Hud {
                 ImGui::text("Selected: " + selectedCount);
                 if (selectedBaseEntity != 0) {
                     ImGui::separator();
-                    ImGui::text("Base");
+                    ImGui::text("Command Center");
                     if (baseQueueLen > 0) {
                         ImGui::text("Queue: " + baseQueueLen + "  next in: "
                                       + Hud::fmt1(baseBuildLeft) + "s");

@@ -182,8 +182,11 @@ class Spawn {
         return e;
     }
 
-    // Player base building — static body, box shape, holds production queue.
-    public static function base(Registry reg, World world, float x, float y): int {
+    // Player Command Center — direct (non-ghost) spawn used by initialMap.
+    // Also produced by Spawn::completeConstruction when a CC ghost is built.
+    // BaseBuilding tag marks it as a drop-off target for worker resources.
+    public static function commandCenter(Registry reg, World world,
+                                           float x, float y): int {
         int e = reg.create();
 
         BodyDef bd = new BodyDef();
@@ -195,35 +198,35 @@ class Spawn {
 
         ShapeDef sd = new ShapeDef();
         sd.setFilter(Cat::building(), Cat::buildingMask(), 0);
-        Shape sh = Shapes::createBox(b, sd, GameConst::baseHalfW(), GameConst::baseHalfH());
+        Shape sh = Shapes::createBox(b, sd, GameConst::commandCenterHalfW(), GameConst::commandCenterHalfH());
         sd.destroy();
 
         PhysicsBody pb = new PhysicsBody();
         pb.bodyHandle = b.handle;
         reg.emplace(e, "PhysicsBody", pb);
 
-        Building bd2 = new Building();
-        bd2.kind = BuildingKind::base();
-        bd2.faction = Faction::player();
-        bd2.hp = GameConst::baseHp();
-        bd2.maxHp = GameConst::baseHp();
-        bd2.producing = 0;
-        bd2.buildLeft = 0.0;
-        bd2.queueLen = 0;
-        bd2.rallyX = x + GameConst::baseRallyDx();
-        bd2.rallyY = y + GameConst::baseRallyDy();
-        reg.emplace(e, "Building", bd2);
+        Building bldg = new Building();
+        bldg.kind = BuildingKind::commandCenter();
+        bldg.faction = Faction::player();
+        bldg.hp = GameConst::commandCenterHp();
+        bldg.maxHp = GameConst::commandCenterHp();
+        bldg.producing = 0;
+        bldg.buildLeft = 0.0;
+        bldg.queueLen = 0;
+        bldg.rallyX = x + GameConst::commandCenterRallyDx();
+        bldg.rallyY = y + GameConst::commandCenterRallyDy();
+        reg.emplace(e, "Building", bldg);
 
         Selectable sel = new Selectable();
-        sel.radius = GameConst::baseHalfW() + 0.2;
+        sel.radius = GameConst::commandCenterHalfW() + 0.2;
         reg.emplace(e, "Selectable", sel);
 
-        // Block the tiles the base occupies for pathfinding.
-        Pathing::blockArea(x - GameConst::baseHalfW(), y - GameConst::baseHalfH(),
-                            x + GameConst::baseHalfW(), y + GameConst::baseHalfH(), true);
+        Pathing::blockArea(x - GameConst::commandCenterHalfW(), y - GameConst::commandCenterHalfH(),
+                            x + GameConst::commandCenterHalfW(), y + GameConst::commandCenterHalfH(), true);
 
         reg.emplaceTag(e, "PlayerControlled");
         reg.emplaceTag(e, "BaseBuilding");
+        reg.emplaceTag(e, "CommandCenterTag");
         return e;
     }
 
@@ -337,10 +340,10 @@ class Spawn {
                                                 float x, float y): int {
         return Spawn::buildingGhost(reg, world, x, y,
                                      BuildingKind::commandCenter(),
-                                     GameConst::baseHalfW(),
-                                     GameConst::baseHalfH(),
-                                     GameConst::baseHp(),
-                                     GameConst::baseRallyDy(),
+                                     GameConst::commandCenterHalfW(),
+                                     GameConst::commandCenterHalfH(),
+                                     GameConst::commandCenterHp(),
+                                     GameConst::commandCenterRallyDy(),
                                      GameConst::commandCenterBuildTime(),
                                      0,
                                      "CommandCenterTag");
@@ -428,9 +431,9 @@ class Spawn {
             halfH = GameConst::refineryHalfH();
             hp    = GameConst::refineryHp();
         } else if (c.buildingKind == BuildingKind::commandCenter()) {
-            halfW = GameConst::baseHalfW();
-            halfH = GameConst::baseHalfH();
-            hp    = GameConst::baseHp();
+            halfW = GameConst::commandCenterHalfW();
+            halfH = GameConst::commandCenterHalfH();
+            hp    = GameConst::commandCenterHp();
         }
 
         BodyDef bd = new BodyDef();
@@ -472,18 +475,17 @@ class Spawn {
     }
 
     // Initial map: 1 base, 4 workers around it, 1 mineral pile, 1 gas
-    // geyser, 2 grunts. Stores base + mineral entity ids in ctx vars.
+    // Player Command Center at origin, four workers around it, one mineral
+    // pile, one gas geyser, two enemy grunts.
     public static function initialMap(Registry reg, World world): void {
-        int baseE = Spawn::base(reg, world, 0.0, 0.0);
-        reg.ctxSetInt("baseEntity", baseE);
+        Spawn::commandCenter(reg, world, 0.0, 0.0);
 
         Spawn::worker(reg, world, -2.5,  2.5);
         Spawn::worker(reg, world,  2.5,  2.5);
         Spawn::worker(reg, world, -2.5, -2.5);
         Spawn::worker(reg, world,  2.5, -2.5);
 
-        int mineE = Spawn::resource(reg, world, 12.0, 0.0, GameConst::resourceStartAmt());
-        reg.ctxSetInt("mineralEntity", mineE);
+        Spawn::resource(reg, world, 12.0, 0.0, GameConst::resourceStartAmt());
 
         Spawn::gasGeyser(reg, world, -12.0, 8.0, GameConst::gasStartAmt());
 

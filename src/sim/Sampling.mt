@@ -53,8 +53,8 @@ class Sampling {
             Body bd = new Body(pb.bodyHandle);
             float[] p = bd.position();
             if (n < snap.buildingX.length) {
-                float hw = GameConst::baseHalfW();
-                float hh = GameConst::baseHalfH();
+                float hw = GameConst::commandCenterHalfW();
+                float hh = GameConst::commandCenterHalfH();
                 if (b.kind == BuildingKind::barracks()) {
                     hw = GameConst::barracksHalfW();
                     hh = GameConst::barracksHalfH();
@@ -62,8 +62,8 @@ class Sampling {
                     hw = GameConst::refineryHalfW();
                     hh = GameConst::refineryHalfH();
                 } else if (b.kind == BuildingKind::commandCenter()) {
-                    hw = GameConst::baseHalfW();
-                    hh = GameConst::baseHalfH();
+                    hw = GameConst::commandCenterHalfW();
+                    hh = GameConst::commandCenterHalfH();
                 }
                 snap.buildingX[n] = p[0];
                 snap.buildingY[n] = p[1];
@@ -135,7 +135,7 @@ class Sampling {
                 radius = u.radius;
             } else if (reg.has(e, "Building")) {
                 Building bld = (Building) reg.get(e, "Building");
-                float hw = GameConst::baseHalfW();
+                float hw = GameConst::commandCenterHalfW();
                 if (bld.kind == BuildingKind::barracks()) { hw = GameConst::barracksHalfW(); }
                 else if (bld.kind == BuildingKind::refinery()) { hw = GameConst::refineryHalfW(); }
                 radius = hw + 0.1;
