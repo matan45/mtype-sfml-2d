@@ -18,6 +18,9 @@ class HudResult {
     public bool placeRefineryClicked;
     public bool placeCommandCenterClicked;
     public bool newDebugDraw;
+    // True if any HUD window was hovered this frame. main.mt mirrors this
+    // into InputState so next frame's pump can gate clicks correctly.
+    public bool hovered;
 
     public constructor() {
         this.trainWorkerClicked        = false;
@@ -26,6 +29,7 @@ class HudResult {
         this.placeRefineryClicked      = false;
         this.placeCommandCenterClicked = false;
         this.newDebugDraw              = false;
+        this.hovered                   = false;
     }
 }
 
@@ -41,6 +45,7 @@ class Hud {
         r.newDebugDraw = debugDraw;
 
         if (ImGui::begin("Status")) {
+            if (ImGui::isWindowHovered()) { r.hovered = true; }
             ImGui::text("Minerals: " + minerals);
             ImGui::text("Gas: " + gas);
             ImGui::text("FPS: " + ((int)fps));
@@ -50,6 +55,7 @@ class Hud {
 
         if (selectedWorkerCount > 0) {
             if (ImGui::begin("Build")) {
+                if (ImGui::isWindowHovered()) { r.hovered = true; }
                 int cCost = GameConst::commandCenterCost();
                 string cLbl = "Build Command Center [" + cCost + " min]";
                 if (minerals < cCost) {
@@ -77,6 +83,7 @@ class Hud {
 
         if (selectedCount > 0) {
             if (ImGui::begin("Selection")) {
+                if (ImGui::isWindowHovered()) { r.hovered = true; }
                 ImGui::text("Selected: " + selectedCount);
                 if (selectedBaseEntity != 0) {
                     ImGui::separator();

@@ -20,6 +20,11 @@ class InputState {
     public float wheelDelta;
     public bool  debugDraw;
     public bool  quitRequested;
+    // True if any ImGui window was hovered at the end of the *previous*
+    // frame. Used to gate mouse-down edges so HUD clicks don't fall
+    // through to the world. ImGui::isWindowHovered() at pump time is
+    // unreliable (no window context is active yet), hence this mirror.
+    public bool  imguiHovered;
 
     public constructor() {
         this.mouseX = 0;
@@ -31,6 +36,7 @@ class InputState {
         this.wheelDelta = 0.0;
         this.debugDraw = false;
         this.quitRequested = false;
+        this.imguiHovered = false;
     }
 
     public function clearEdges(): void {
@@ -103,12 +109,12 @@ class Input {
                 s.mouseX = Event::mouseX();
                 s.mouseY = Event::mouseY();
                 if (b == Input::mLeft) {
-                    if (!ImGui::isWindowHovered()) {
+                    if (!s.imguiHovered) {
                         s.leftDownEdge = true;
                         s.leftHeld = true;
                     }
                 } else if (b == Input::mRight) {
-                    if (!ImGui::isWindowHovered()) {
+                    if (!s.imguiHovered) {
                         s.rightClickEdge = true;
                     }
                 }

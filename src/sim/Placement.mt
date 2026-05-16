@@ -196,16 +196,17 @@ class Placement {
         return hits.length == 0;
     }
 
-    // Pick the nearest PlayerControlled Worker by squared distance to the
-    // ghost and emplace a ConstructOrder on it. Falls back to a no-op if no
-    // worker exists.
+    // Pick the builder: prefer the closest currently-Selected player Worker;
+    // if none are selected, fall back to the closest player Worker overall.
+    // Emplace a ConstructOrder on it. No-op if no worker exists.
     public static function autoAssignBuilder(Registry reg, World world,
                                                int ghostE, float gx, float gy): void {
-        string[] need = ["Unit", "PhysicsBody", "PlayerControlled", "Worker"];
-        EnttView v = reg.view(need);
+        // Pass 1: scan Selected + Worker.
+        string[] needSel = ["Selected", "Unit", "PhysicsBody", "PlayerControlled", "Worker"];
+        EnttView vs = reg.view(needSel);
         int best = 0;
         float bestD2 = 1000000000.0;
-        int e = v.next();
+        int e = vs.next();
         while (e != 0) {
             PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
             Body b = new Body(pb.bodyHandle);
@@ -213,13 +214,29 @@ class Placement {
             float dx = p[0] - gx;
             float dy = p[1] - gy;
             float d2 = dx * dx + dy * dy;
-            if (d2 < bestD2) {
-                bestD2 = d2;
-                best = e;
-            }
-            e = v.next();
+            if (d2 < bestD2) { bestD2 = d2; best = e; }
+            e = vs.next();
         }
-        v.destroy();
+        vs.destroy();
+
+        // Pass 2 (only if nothing selected): any player Worker.
+        if (best == 0) {
+            string[] needAny = ["Unit", "PhysicsBody", "PlayerControlled", "Worker"];
+            EnttView va = reg.view(needAny);
+            int ea = va.next();
+            while (ea != 0) {
+                PhysicsBody pb = (PhysicsBody) reg.get(ea, "PhysicsBody");
+                Body b = new Body(pb.bodyHandle);
+                float[] p = b.position();
+                float dx = p[0] - gx;
+                float dy = p[1] - gy;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < bestD2) { bestD2 = d2; best = ea; }
+                ea = va.next();
+            }
+            va.destroy();
+        }
+
         if (best == 0) { return; }
 
         // Clear conflicting orders so the worker abandons what it's doing

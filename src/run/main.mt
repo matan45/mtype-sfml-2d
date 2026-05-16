@@ -129,6 +129,7 @@ class App {
                                        selBarracks, barracksQueueLen, barracksBuildLeft,
                                        in.debugDraw);
             in.debugDraw = hr.newDebugDraw;
+            in.imguiHovered = hr.hovered;
             if (hr.trainWorkerClicked && selBase != 0) {
                 Production::tryQueueUnit(reg, selBase);
             }
