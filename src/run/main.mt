@@ -31,13 +31,12 @@ import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
 import * from "../sim/Commands.mt";
 
-@EntryPoint
+
 class App {
     public static function main(string[] args): void {
         __plugin_load("mt_modules/@mtype-sfml/mt/mtype_sfml.dll");
         __plugin_load("mt_modules/@mtype-box2d/mt/mtype_b2d.dll");
         __plugin_load("mt_modules/@mtype-entt/mt/mtype_entt.dll");
-
         int W = 1280;
         int H = 720;
         RenderWindow win = Sfml::createWindow("RTS-MVP", W, H);
@@ -140,3 +139,5 @@ class App {
         return 0;
     }
 }
+
+App::main([]);
