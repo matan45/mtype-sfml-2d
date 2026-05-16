@@ -66,11 +66,21 @@ class RenderPool {
 }
 
 class Render {
-    public static RenderPool pool = new RenderPool();
+    // Lazy-initialized: RenderPool's constructor calls SFML natives, so it
+    // can only run after main.mt has loaded the SFML plugin.
+    public static RenderPool? pool = null;
+
+    public static function ensurePool(): RenderPool {
+        if (Render::pool == null) {
+            Render::pool = new RenderPool();
+        }
+        return Render::pool;
+    }
 
     public static function world(RenderWindow win, View view, CameraState cam,
                                    WorldSnapshot snap, World physics,
                                    InputState in, SelectionState sel): void {
+        RenderPool p = Render::ensurePool();
         Camera::setView(win, view);
 
         // Buildings.
@@ -82,7 +92,7 @@ class Render {
             int   fc = snap.buildingFaction[i];
             float hw = snap.buildingHw[i];
             float hh = snap.buildingHh[i];
-            RectangleShape r = Render::pool.buildingRect;
+            RectangleShape r = p.buildingRect;
             r.setSize(hw * 2.0, hh * 2.0);
             r.setOrigin(hw, hh);
             r.setPosition(bx, by);
@@ -105,7 +115,7 @@ class Render {
             float ry = snap.resourceY[i];
             float hw = snap.resourceHw[i];
             float hh = snap.resourceHh[i];
-            RectangleShape r = Render::pool.resourceRect;
+            RectangleShape r = p.resourceRect;
             r.setSize(hw * 2.0, hh * 2.0);
             r.setOrigin(hw, hh);
             r.setPosition(rx, ry);
@@ -125,7 +135,7 @@ class Render {
             int   fc = snap.unitFaction[i];
             float rd = snap.unitRadius[i];
 
-            CircleShape c = Render::pool.unitCircle;
+            CircleShape c = p.unitCircle;
             c.setRadius(rd);
             c.setOrigin(rd, rd);
             c.setPosition(ux, uy);
@@ -147,7 +157,7 @@ class Render {
             float sx = snap.selectedX[i];
             float sy = snap.selectedY[i];
             float sr = snap.selectedRadius[i];
-            CircleShape c = Render::pool.selectionRing;
+            CircleShape c = p.selectionRing;
             float ring = sr + 0.15;
             c.setRadius(ring);
             c.setOrigin(ring, ring);
@@ -169,7 +179,7 @@ class Render {
                 float bh = 0.15;
                 float bx = ux - bw * 0.5;
                 float by = uy - rd - 0.5;
-                RectangleShape back = Render::pool.hpBack;
+                RectangleShape back = p.hpBack;
                 back.setSize(bw, bh);
                 back.setOrigin(0.0, 0.0);
                 back.setPosition(bx, by);
@@ -177,7 +187,7 @@ class Render {
                 back.setOutlineThickness(0.0);
                 Draw::rect(win, back);
 
-                RectangleShape front = Render::pool.hpFront;
+                RectangleShape front = p.hpFront;
                 float frac = hp / mx;
                 if (frac < 0.0) { frac = 0.0; }
                 if (frac > 1.0) { frac = 1.0; }
@@ -203,7 +213,7 @@ class Render {
                 float cx = d[0];
                 float cy = d[1];
                 float radius = d[2];
-                CircleShape c = Render::pool.debugCircle;
+                CircleShape c = p.debugCircle;
                 c.setRadius(radius);
                 c.setOrigin(radius, radius);
                 c.setPosition(cx, cy);
@@ -212,7 +222,7 @@ class Render {
             }
             int sc = DebugDraw::segmentCount(physics);
             if (sc > 0) {
-                VertexArray va = Render::pool.debugSegments;
+                VertexArray va = p.debugSegments;
                 int need = sc * 2;
                 if (va.size() < need) { va.resize(need); }
                 j = 0;
@@ -240,7 +250,7 @@ class Render {
             float wy0 = ((minY - cam.centerY) / cam.sizeH) * (float)sz[1] + (float)sz[1] * 0.5;
             float wx1 = ((maxX - cam.centerX) / cam.sizeW) * (float)sz[0] + (float)sz[0] * 0.5;
             float wy1 = ((maxY - cam.centerY) / cam.sizeH) * (float)sz[1] + (float)sz[1] * 0.5;
-            RectangleShape r = Render::pool.dragBox;
+            RectangleShape r = p.dragBox;
             r.setOrigin(0.0, 0.0);
             r.setPosition(wx0, wy0);
             r.setSize(wx1 - wx0, wy1 - wy0);

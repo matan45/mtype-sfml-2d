@@ -42,21 +42,42 @@ class InputState {
 }
 
 class Input {
-    // Cached event-id constants so we don't re-resolve them per event.
-    public static int idClosed       = Sfml::closedEventId();
-    public static int idKeyPressed   = Sfml::keyPressedEventId();
-    public static int idMouseDown    = Sfml::mouseButtonPressedEventId();
-    public static int idMouseUp      = Sfml::mouseButtonReleasedEventId();
-    public static int idMouseMoved   = Sfml::mouseMovedEventId();
-    public static int idMouseWheel   = Sfml::mouseWheelScrolledEventId();
+    // Lazily-cached event-id and key constants. Resolved on first pump()
+    // call rather than at class-load time — the SFML plugin natives that
+    // back closedEventId() / keyPressedEventId() / etc. aren't present
+    // until main.mt has called __plugin_load.
+    public static int idClosed     = 0;
+    public static int idKeyPressed = 0;
+    public static int idMouseDown  = 0;
+    public static int idMouseUp    = 0;
+    public static int idMouseMoved = 0;
+    public static int idMouseWheel = 0;
 
-    public static int kEsc = Key::escape();
-    public static int kF1  = Key::f1();
+    public static int kEsc = 0;
+    public static int kF1  = 0;
 
-    public static int mLeft  = MouseButton::left();
-    public static int mRight = MouseButton::right();
+    public static int mLeft  = 0;
+    public static int mRight = 0;
+
+    public static int ready = 0;
+
+    public static function ensureReady(): void {
+        if (Input::ready == 1) { return; }
+        Input::idClosed     = Sfml::closedEventId();
+        Input::idKeyPressed = Sfml::keyPressedEventId();
+        Input::idMouseDown  = Sfml::mouseButtonPressedEventId();
+        Input::idMouseUp    = Sfml::mouseButtonReleasedEventId();
+        Input::idMouseMoved = Sfml::mouseMovedEventId();
+        Input::idMouseWheel = Sfml::mouseWheelScrolledEventId();
+        Input::kEsc   = Key::escape();
+        Input::kF1    = Key::f1();
+        Input::mLeft  = MouseButton::left();
+        Input::mRight = MouseButton::right();
+        Input::ready = 1;
+    }
 
     public static function pump(RenderWindow win, InputState s): void {
+        Input::ensureReady();
         s.clearEdges();
         // Refresh current cursor position from window every frame so the
         // selection box can use it even when the mouse hasn't moved.
