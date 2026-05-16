@@ -31,7 +31,7 @@ import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
 import * from "../sim/Commands.mt";
 
-
+@EntryPoint
 class App {
     public static function main(string[] args): void {
         __plugin_load("mt_modules/@mtype-sfml/mt/mtype_sfml.dll");
@@ -67,6 +67,7 @@ class App {
         while (win.isOpen()) {
             Input::pump(win, in);
             if (in.quitRequested) { win.close(); }
+            Selection::update(reg, world, win, cam, in, sel);
 
             float frame = clk.restartSeconds();
             if (frame > maxFrame) { frame = maxFrame; }
@@ -78,7 +79,6 @@ class App {
 
             while (acc >= fixedDt) {
                 Commands::apply(reg, world, win, cam, in);
-                Selection::update(reg, world, win, cam, in, sel);
                 Combat::run(reg, world, fixedDt);
                 Gather::run(reg, world, fixedDt);
                 Steering::run(reg, fixedDt);
@@ -139,5 +139,3 @@ class App {
         return 0;
     }
 }
-
-App::main([]);
