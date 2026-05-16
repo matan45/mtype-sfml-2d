@@ -72,6 +72,7 @@ class App {
             if (in.quitRequested) { win.close(); }
             Placement::update(reg, world, win, cam, in, pls);
             Selection::update(reg, world, win, cam, in, sel);
+            Commands::apply(reg, world, win, cam, in);
 
             float frame = clk.restartSeconds();
             if (frame > maxFrame) { frame = maxFrame; }
@@ -82,7 +83,6 @@ class App {
             acc = acc + frame;
 
             while (acc >= fixedDt) {
-                Commands::apply(reg, world, win, cam, in);
                 Combat::run(reg, world, fixedDt);
                 Gather::run(reg, world, fixedDt);
                 Construct::run(reg, world, fixedDt);
