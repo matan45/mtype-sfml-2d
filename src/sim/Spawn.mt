@@ -30,10 +30,7 @@ class Spawn {
         ShapeDef sd = new ShapeDef();
         sd.setDensity(1.0);
         sd.setFriction(0.3);
-        sd.setFilter(Cat::unitPlayer(),
-                     Cat::terrain() | Cat::building() | Cat::resource()
-                     | Cat::unitPlayer() | Cat::unitEnemy(),
-                     0);
+        sd.setFilter(Cat::unitPlayer(), Cat::unitMask(), 0);
         Shape sh = Shapes::createCircle(b, sd, GameConst::workerRadius(), 0.0, 0.0);
         sd.destroy();
 
@@ -80,10 +77,7 @@ class Spawn {
         ShapeDef sd = new ShapeDef();
         sd.setDensity(1.2);
         sd.setFriction(0.3);
-        sd.setFilter(Cat::unitEnemy(),
-                     Cat::terrain() | Cat::building() | Cat::resource()
-                     | Cat::unitPlayer() | Cat::unitEnemy(),
-                     0);
+        sd.setFilter(Cat::unitEnemy(), Cat::unitMask(), 0);
         Shape sh = Shapes::createCircle(b, sd, GameConst::gruntRadius(), 0.0, 0.0);
         sd.destroy();
 
@@ -135,9 +129,7 @@ class Spawn {
         b.setUserDataInt(e);
 
         ShapeDef sd = new ShapeDef();
-        sd.setFilter(Cat::building(),
-                     Cat::unitPlayer() | Cat::unitEnemy() | Cat::terrain(),
-                     0);
+        sd.setFilter(Cat::building(), Cat::buildingMask(), 0);
         Shape sh = Shapes::createBox(b, sd, GameConst::baseHalfW(), GameConst::baseHalfH());
         sd.destroy();
 
@@ -183,9 +175,7 @@ class Spawn {
         b.setUserDataInt(e);
 
         ShapeDef sd = new ShapeDef();
-        sd.setFilter(Cat::resource(),
-                     Cat::unitPlayer() | Cat::unitEnemy(),
-                     0);
+        sd.setFilter(Cat::resource(), Cat::resourceMask(), 0);
         Shape sh = Shapes::createBox(b, sd, GameConst::resourceHalfW(), GameConst::resourceHalfH());
         sd.destroy();
 

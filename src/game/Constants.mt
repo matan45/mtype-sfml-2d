@@ -9,6 +9,17 @@ class Cat {
     public static function resource():    int { return 16; }
     public static function sensor():      int { return 32; }
     public static function all():         int { return 65535; }
+
+    // Precomputed mask combinations. Named per use site rather than inlined
+    // at the call so the bit set stays inspectable in one place.
+    //                                          terrain | building | resource | unitPlayer | unitEnemy
+    public static function unitMask():    int { return 1 | 8 | 16 | 2 | 4; }
+    // mask used by player-only AABB picking — units + buildings.
+    public static function playerPickMask(): int { return 2 | 8; }
+    // mask for static buildings: collide with terrain + any unit.
+    public static function buildingMask(): int { return 1 | 2 | 4; }
+    // mask for resource piles: collide with any unit.
+    public static function resourceMask(): int { return 2 | 4; }
 }
 
 class Faction {

@@ -85,7 +85,7 @@ class Selection {
 
     public static function pickSingle(Registry reg, World world, float wx, float wy): void {
         int[] hits = Query::overlapAABB(world, wx - 0.4, wy - 0.4, wx + 0.4, wy + 0.4,
-                                          Cat::all(), Cat::unitPlayer() | Cat::building());
+                                          Cat::all(), Cat::playerPickMask());
         int n = hits.length;
         int i = 0;
         while (i < n) {

@@ -87,7 +87,7 @@ class Commands {
                 AttackOrder ao = new AttackOrder();
                 ao.targetEntity = enemy;
                 reg.emplace(e, "AttackOrder", ao);
-                Body tb = Commands::bodyOf(reg, enemy);
+                Body? tb = Commands::bodyOf(reg, enemy);
                 if (tb != null) {
                     float[] tp = tb.position();
                     Commands::setMove(reg, e, pb.bodyHandle, tp[0], tp[1], world);
@@ -109,7 +109,7 @@ class Commands {
         }
     }
 
-    public static function bodyOf(Registry reg, int e): Body {
+    public static function bodyOf(Registry reg, int e): Body? {
         if (!reg.valid(e)) { return null; }
         if (!reg.has(e, "PhysicsBody")) { return null; }
         PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
