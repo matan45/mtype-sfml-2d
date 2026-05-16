@@ -18,7 +18,7 @@ class Combat {
     // ---- Combat: enemies attacking player units --------------------
     public static function run(Registry reg, World world, float dt): void {
         string[] need = ["Unit", "PhysicsBody"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int e = v.next();
         while (e != 0) {
             Unit u = (Unit) reg.get(e, "Unit");
@@ -115,7 +115,7 @@ class Gather {
     // ---- Worker gather/deposit state machine ------------------------
     public static function run(Registry reg, World world, float dt): void {
         string[] need = ["Carrying", "PhysicsBody"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int e = v.next();
         while (e != 0) {
             Carrying c = (Carrying) reg.get(e, "Carrying");

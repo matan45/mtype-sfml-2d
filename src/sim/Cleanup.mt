@@ -15,7 +15,7 @@ class Cleanup {
         // Snapshot dead entities into a plain int[] before iterating —
         // destroying entities mid-view would invalidate the cursor.
         string[] need = ["Dead"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int[] all = v.entities();
         v.destroy();
 

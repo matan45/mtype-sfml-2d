@@ -11,7 +11,7 @@ import * from "./Spawn.mt";
 class Production {
     public static function run(Registry reg, World world, float dt): void {
         string[] need = ["Building"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int e = v.next();
         while (e != 0) {
             Building b = (Building) reg.get(e, "Building");

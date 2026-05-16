@@ -19,7 +19,7 @@ class Sampling {
 
     public static function collectUnits(Registry reg, WorldSnapshot snap): void {
         string[] need = ["Unit", "PhysicsBody"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int n = 0;
         int e = v.next();
         while (e != 0) {
@@ -44,7 +44,7 @@ class Sampling {
 
     public static function collectBuildings(Registry reg, WorldSnapshot snap): void {
         string[] need = ["Building", "PhysicsBody"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int n = 0;
         int e = v.next();
         while (e != 0) {
@@ -68,7 +68,7 @@ class Sampling {
 
     public static function collectResources(Registry reg, WorldSnapshot snap): void {
         string[] need = ["ResourceNode"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int n = 0;
         int e = v.next();
         while (e != 0) {
@@ -88,7 +88,7 @@ class Sampling {
 
     public static function collectSelected(Registry reg, WorldSnapshot snap): void {
         string[] need = ["Selected", "PhysicsBody"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int n = 0;
         int e = v.next();
         while (e != 0) {

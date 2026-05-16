@@ -98,7 +98,7 @@ class Pathing {
     }
 
     // ---- path side-map ----
-    public static function findPath(int e): PathEntry {
+    public static function findPath(int e): PathEntry? {
         int n = Pathing::pathLen;
         int i = 0;
         while (i < n) {

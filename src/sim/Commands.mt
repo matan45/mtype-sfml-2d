@@ -45,7 +45,7 @@ class Commands {
     // order. Returns an int[] of entity ids.
     public static function selectedUnits(Registry reg): int[] {
         string[] need = ["Selected", "Unit", "PlayerControlled"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int[] ents = v.entities();
         v.destroy();
         return ents;

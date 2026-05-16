@@ -11,7 +11,7 @@ import * from "./Pathing.mt";
 class Steering {
     public static function run(Registry reg, float dt): void {
         string[] need = ["Unit", "PhysicsBody", "MoveOrder"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int e = v.next();
         while (e != 0) {
             Unit       u  = (Unit)       reg.get(e, "Unit");
@@ -27,7 +27,7 @@ class Steering {
             float ty = mo.ty;
             int   advanced = 0;
 
-            PathEntry pe = Pathing::findPath(e);
+            PathEntry? pe = Pathing::findPath(e);
             if (pe != null) {
                 int idx = mo.pathIdx;
                 if (idx < 0) { idx = 0; }

@@ -72,7 +72,7 @@ class Selection {
 
     public static function clearAllSelected(Registry reg): void {
         string[] need = ["Selected"];
-        View v = reg.view(need);
+        EnttView v = reg.view(need);
         int[] all = v.entities();
         v.destroy();
         int n = all.length;
