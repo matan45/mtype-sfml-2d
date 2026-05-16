@@ -41,6 +41,30 @@ class Commands {
         return 0;
     }
 
+    // Return the player BaseBuilding (initial Base or completed Command
+    // Center) closest to (wx, wy). 0 if none exist.
+    public static function findNearestHomeBase(Registry reg, float wx, float wy): int {
+        string[] need = ["BaseBuilding", "Building", "PhysicsBody"];
+        EnttView v = reg.view(need);
+        int best = 0;
+        float bestD2 = 1000000000.0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) {
+                PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
+                Body b = new Body(pb.bodyHandle);
+                float[] p = b.position();
+                float dx = p[0] - wx;
+                float dy = p[1] - wy;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < bestD2) { bestD2 = d2; best = e; }
+            }
+            e = v.next();
+        }
+        v.destroy();
+        return best;
+    }
+
     // Sensor-category AABB pick filtered to entities with the Ghost tag.
     // Necessary because grunt range-sensors also live in Cat::sensor().
     public static function pickGhost(Registry reg, World world,
@@ -126,8 +150,6 @@ class Commands {
         int n = units.length;
         if (n == 0) { return; }
 
-        int baseEntity = reg.ctxGetInt("baseEntity");
-
         int i = 0;
         while (i < n) {
             int e = units[i];
@@ -160,9 +182,12 @@ class Commands {
                     Commands::setMove(reg, e, pb.bodyHandle, gp[0], gp[1], world);
                 }
             } else if (refinery != 0 && u.kind == UnitKind::worker()) {
+                Body wb = new Body(pb.bodyHandle);
+                float[] wp = wb.position();
+                int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
                 Carrying c = new Carrying();
                 c.amount = 0;
-                c.homeBase = baseEntity;
+                c.homeBase = homeE;
                 c.sourceNode = refinery;
                 c.gatherLeft = GameConst::workerGatherTime();
                 c.kind = ResourceKind::gas();
@@ -175,9 +200,12 @@ class Commands {
                 }
             } else if (mineral != 0 && u.kind == UnitKind::worker()) {
                 ResourceNode rn = (ResourceNode) reg.get(mineral, "ResourceNode");
+                Body wb = new Body(pb.bodyHandle);
+                float[] wp = wb.position();
+                int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
                 Carrying c = new Carrying();
                 c.amount = 0;
-                c.homeBase = baseEntity;
+                c.homeBase = homeE;
                 c.sourceNode = mineral;
                 c.gatherLeft = GameConst::workerGatherTime();
                 c.kind = ResourceKind::minerals();

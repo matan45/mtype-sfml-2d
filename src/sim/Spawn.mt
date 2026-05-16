@@ -268,6 +268,19 @@ class Spawn {
                                      "RefineryTag");
     }
 
+    public static function commandCenterGhost(Registry reg, World world,
+                                                float x, float y): int {
+        return Spawn::buildingGhost(reg, world, x, y,
+                                     BuildingKind::commandCenter(),
+                                     GameConst::baseHalfW(),
+                                     GameConst::baseHalfH(),
+                                     GameConst::baseHp(),
+                                     GameConst::baseRallyDy(),
+                                     GameConst::commandCenterBuildTime(),
+                                     0,
+                                     "CommandCenterTag");
+    }
+
     // Shared ghost builder. `tag` is the per-kind discriminator tag.
     public static function buildingGhost(Registry reg, World world,
                                            float x, float y, int kind,
@@ -349,6 +362,10 @@ class Spawn {
             halfW = GameConst::refineryHalfW();
             halfH = GameConst::refineryHalfH();
             hp    = GameConst::refineryHp();
+        } else if (c.buildingKind == BuildingKind::commandCenter()) {
+            halfW = GameConst::baseHalfW();
+            halfH = GameConst::baseHalfH();
+            hp    = GameConst::baseHp();
         }
 
         BodyDef bd = new BodyDef();
@@ -381,6 +398,8 @@ class Spawn {
             Refinery rf = new Refinery();
             rf.geyserEntity = c.geyserEntity;
             reg.emplace(ghostE, "Refinery", rf);
+        } else if (c.buildingKind == BuildingKind::commandCenter()) {
+            reg.emplaceTag(ghostE, "BaseBuilding");
         }
 
         Pathing::blockArea(px - halfW, py - halfH, px + halfW, py + halfH, true);

@@ -33,9 +33,10 @@ class UnitKind {
 }
 
 class BuildingKind {
-    public static function base():     int { return 1; }
-    public static function barracks(): int { return 2; }
-    public static function refinery(): int { return 3; }
+    public static function base():          int { return 1; }
+    public static function barracks():      int { return 2; }
+    public static function refinery():      int { return 3; }
+    public static function commandCenter(): int { return 4; }
 }
 
 class ResourceKind {
@@ -82,6 +83,11 @@ class GameConst {
     public static function refineryCost():      int   { return 75; }
     public static function refineryBuildTime(): float { return 8.0; }
     public static function refinerySnapRadius(): float { return 1.5; }
+
+    // Command Center = an additional Base. Built by workers near remote
+    // resources so they have a closer drop-off building.
+    public static function commandCenterCost():      int   { return 200; }
+    public static function commandCenterBuildTime(): float { return 18.0; }
 
     public static function resourceHalfW():   float { return 1.0; }
     public static function resourceHalfH():   float { return 1.0; }

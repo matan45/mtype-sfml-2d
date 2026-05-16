@@ -162,6 +162,7 @@ class Schema {
         reg.registerTag("BaseBuilding");
         reg.registerTag("Barracks");
         reg.registerTag("RefineryTag");
+        reg.registerTag("CommandCenterTag");
         reg.registerTag("GasGeyser");
         reg.registerTag("Ghost");
         reg.registerTag("HasPath");

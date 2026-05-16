@@ -100,8 +100,7 @@ class App {
 
             ImGui::update(win, frame * 1000.0);
 
-            int baseE       = reg.ctxGetInt("baseEntity");
-            int selBase     = App::selectedBase(reg, baseE);
+            int selBase     = App::selectedBase(reg);
             int baseQueueLen    = 0;
             float baseBuildLeft = 0.0;
             if (selBase != 0) {
@@ -139,6 +138,9 @@ class App {
             if (hr.placeRefineryClicked && !pls.active) {
                 pls.start(BuildingKind::refinery());
             }
+            if (hr.placeCommandCenterClicked && !pls.active) {
+                pls.start(BuildingKind::commandCenter());
+            }
 
             win.clear(28, 32, 38, 255);
             Render::world(win, view, cam, snap, world, in, sel, pls);
@@ -157,13 +159,19 @@ class App {
         __plugin_unload("mt_modules/@mtype-sfml/mt/mtype_sfml.dll");
     }
 
-    // Returns the entity id of the currently-selected base (only if it is
-    // PlayerControlled), else 0.
-    public static function selectedBase(Registry reg, int baseE): int {
-        if (baseE == 0) { return 0; }
-        if (!reg.valid(baseE)) { return 0; }
-        if (reg.has(baseE, "Selected")) { return baseE; }
-        return 0;
+    // First Selected BaseBuilding (initial Base or completed Command
+    // Center). Returns 0 if no base-like building is currently selected.
+    public static function selectedBase(Registry reg): int {
+        string[] need = ["Selected", "Building", "BaseBuilding"];
+        EnttView v = reg.view(need);
+        int found = 0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) { found = e; }
+            e = v.next();
+        }
+        v.destroy();
+        return found;
     }
 
     // First Selected barracks (real, not ghost). Used by the HUD to surface

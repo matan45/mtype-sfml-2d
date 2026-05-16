@@ -61,6 +61,9 @@ class Sampling {
                 } else if (b.kind == BuildingKind::refinery()) {
                     hw = GameConst::refineryHalfW();
                     hh = GameConst::refineryHalfH();
+                } else if (b.kind == BuildingKind::commandCenter()) {
+                    hw = GameConst::baseHalfW();
+                    hh = GameConst::baseHalfH();
                 }
                 snap.buildingX[n] = p[0];
                 snap.buildingY[n] = p[1];

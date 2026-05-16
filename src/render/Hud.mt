@@ -16,14 +16,16 @@ class HudResult {
     public bool trainGruntClicked;
     public bool placeBarracksClicked;
     public bool placeRefineryClicked;
+    public bool placeCommandCenterClicked;
     public bool newDebugDraw;
 
     public constructor() {
-        this.trainWorkerClicked   = false;
-        this.trainGruntClicked    = false;
-        this.placeBarracksClicked = false;
-        this.placeRefineryClicked = false;
-        this.newDebugDraw         = false;
+        this.trainWorkerClicked        = false;
+        this.trainGruntClicked         = false;
+        this.placeBarracksClicked      = false;
+        this.placeRefineryClicked      = false;
+        this.placeCommandCenterClicked = false;
+        this.newDebugDraw              = false;
     }
 }
 
@@ -48,6 +50,13 @@ class Hud {
 
         if (selectedWorkerCount > 0) {
             if (ImGui::begin("Build")) {
+                int cCost = GameConst::commandCenterCost();
+                string cLbl = "Build Command Center [" + cCost + " min]";
+                if (minerals < cCost) {
+                    ImGui::textDisabled(cLbl);
+                } else if (ImGui::button(cLbl)) {
+                    r.placeCommandCenterClicked = true;
+                }
                 int bCost = GameConst::barracksCost();
                 string bLbl = "Build Barracks [" + bCost + " min]";
                 if (minerals < bCost) {

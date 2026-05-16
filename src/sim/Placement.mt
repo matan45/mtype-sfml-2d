@@ -85,10 +85,15 @@ class Placement {
                 pls.targetGeyser = 0;
             }
         } else {
+            float hw = GameConst::barracksHalfW();
+            float hh = GameConst::barracksHalfH();
+            if (pls.kind == BuildingKind::commandCenter()) {
+                hw = GameConst::baseHalfW();
+                hh = GameConst::baseHalfH();
+            }
             pls.snapX = wx;
             pls.snapY = wy;
-            pls.validPos = Placement::overlapsNothing(world, wx, wy,
-                                GameConst::barracksHalfW(), GameConst::barracksHalfH());
+            pls.validPos = Placement::overlapsNothing(world, wx, wy, hw, hh);
             pls.targetGeyser = 0;
         }
 
@@ -100,6 +105,8 @@ class Placement {
                 int ghostE = 0;
                 if (pls.kind == BuildingKind::barracks()) {
                     ghostE = Spawn::barracksGhost(reg, world, pls.snapX, pls.snapY);
+                } else if (pls.kind == BuildingKind::commandCenter()) {
+                    ghostE = Spawn::commandCenterGhost(reg, world, pls.snapX, pls.snapY);
                 } else {
                     ghostE = Spawn::refineryGhost(reg, world, pls.snapX, pls.snapY,
                                                     pls.targetGeyser);
@@ -118,8 +125,9 @@ class Placement {
     }
 
     public static function costOf(int kind): int {
-        if (kind == BuildingKind::barracks()) { return GameConst::barracksCost(); }
-        if (kind == BuildingKind::refinery()) { return GameConst::refineryCost(); }
+        if (kind == BuildingKind::barracks())      { return GameConst::barracksCost(); }
+        if (kind == BuildingKind::refinery())      { return GameConst::refineryCost(); }
+        if (kind == BuildingKind::commandCenter()) { return GameConst::commandCenterCost(); }
         return 0;
     }
 
@@ -196,7 +204,7 @@ class Placement {
         string[] need = ["Unit", "PhysicsBody", "PlayerControlled", "Worker"];
         EnttView v = reg.view(need);
         int best = 0;
-        float bestD2 = 1.030;
+        float bestD2 = 1000000000.0;
         int e = v.next();
         while (e != 0) {
             PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
