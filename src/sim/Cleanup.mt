@@ -6,6 +6,7 @@
 import * from "@mtype-entt/Entt.mt";
 import * from "@mtype-box2d/Body.mt";
 
+import * from "../game/Constants.mt";
 import * from "./Schema.mt";
 import * from "./Events.mt";
 import * from "./Pathing.mt";
@@ -23,6 +24,17 @@ class Cleanup {
         int i = 0;
         while (i < n) {
             int ent = all[i];
+            // Free the pathing footprint BEFORE destroying the body so we
+            // still have its world position.
+            if (reg.has(ent, "Building") && reg.has(ent, "PhysicsBody")) {
+                Building bld = (Building) reg.get(ent, "Building");
+                PhysicsBody pb = (PhysicsBody) reg.get(ent, "PhysicsBody");
+                Body b = new Body(pb.bodyHandle);
+                float[] p = b.position();
+                float hx = GameConst::buildingHalfExtent(bld.kind);
+                Pathing::blockArea(p[0] - hx, p[1] - hx,
+                                     p[0] + hx, p[1] + hx, false);
+            }
             if (reg.has(ent, "PhysicsBody")) {
                 PhysicsBody pb = (PhysicsBody) reg.get(ent, "PhysicsBody");
                 Body b = new Body(pb.bodyHandle);

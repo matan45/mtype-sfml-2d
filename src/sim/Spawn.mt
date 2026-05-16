@@ -87,7 +87,8 @@ class Spawn {
         sdS.setDensity(0.0);
         sdS.setIsSensor(true);
         sdS.enableSensorEvents(true);
-        sdS.setFilter(Cat::sensor(), Cat::unitEnemy(), 0);
+        int sensMaskP = Cat::unitEnemy() | Cat::building();
+        sdS.setFilter(Cat::sensor(), sensMaskP, 0);
         Shape sens = Shapes::createCircle(b, sdS,
                                            GameConst::gruntRange() + GameConst::gruntSensorPad(),
                                            0.0, 0.0);
@@ -148,7 +149,8 @@ class Spawn {
         sdS.setDensity(0.0);
         sdS.setIsSensor(true);
         sdS.enableSensorEvents(true);
-        sdS.setFilter(Cat::sensor(), Cat::unitPlayer(), 0);
+        int sensMaskE = Cat::unitPlayer() | Cat::building();
+        sdS.setFilter(Cat::sensor(), sensMaskE, 0);
         Shape sens = Shapes::createCircle(b, sdS,
                                            GameConst::gruntRange() + GameConst::gruntSensorPad(),
                                            0.0, 0.0);

@@ -42,10 +42,23 @@ class Combat {
                 if (target == 0) {
                     int seen = Events::anyTargetOf(e);
                     if (seen != 0 && reg.valid(seen) && !reg.has(seen, "Dead")) {
-                        AttackOrder ao = new AttackOrder();
-                        ao.targetEntity = seen;
-                        reg.emplace(e, "AttackOrder", ao);
-                        target = seen;
+                        // Sensor pairs may include same-faction buildings
+                        // (e.g. friendly base under a player grunt's
+                        // sensor). Skip same-faction targets.
+                        int tf = 0;
+                        if (reg.has(seen, "Unit")) {
+                            Unit tu = (Unit) reg.get(seen, "Unit");
+                            tf = tu.faction;
+                        } else if (reg.has(seen, "Building")) {
+                            Building tb = (Building) reg.get(seen, "Building");
+                            tf = tb.faction;
+                        }
+                        if (tf != 0 && tf != u.faction) {
+                            AttackOrder ao = new AttackOrder();
+                            ao.targetEntity = seen;
+                            reg.emplace(e, "AttackOrder", ao);
+                            target = seen;
+                        }
                     }
                 }
 
@@ -69,7 +82,14 @@ class Combat {
         float dx = tp[0] - ap[0];
         float dy = tp[1] - ap[1];
         float d2 = dx * dx + dy * dy;
+        // Reach accounts for the target's body half-extent: against a box-
+        // shaped building, the attacker's body bumps the wall well before
+        // center-to-center distance drops below attackRange.
         float reach = u.attackRange + u.radius;
+        if (reg.has(target, "Building")) {
+            Building tbld = (Building) reg.get(target, "Building");
+            reach = reach + GameConst::buildingHalfExtent(tbld.kind);
+        }
         if (d2 <= reach * reach) {
             ab.setLinearVelocity(0.0, 0.0);
             if (reg.has(attacker, "MoveOrder")) {
@@ -77,13 +97,23 @@ class Combat {
                 Pathing::clearPath(attacker);
             }
             if (u.cooldownLeft <= 0.0) {
-                Unit tu = (Unit) reg.get(target, "Unit");
-                tu.hp = tu.hp - u.attackDamage;
-                if (tu.hp <= 0.0) {
-                    tu.hp = 0.0;
-                    if (!reg.has(target, "Dead")) { reg.emplaceTag(target, "Dead"); }
+                if (reg.has(target, "Building")) {
+                    Building tbld = (Building) reg.get(target, "Building");
+                    tbld.hp = tbld.hp - u.attackDamage;
+                    if (tbld.hp <= 0.0) {
+                        tbld.hp = 0.0;
+                        if (!reg.has(target, "Dead")) { reg.emplaceTag(target, "Dead"); }
+                    }
+                    reg.emplace(target, "Building", tbld);
+                } else if (reg.has(target, "Unit")) {
+                    Unit tu = (Unit) reg.get(target, "Unit");
+                    tu.hp = tu.hp - u.attackDamage;
+                    if (tu.hp <= 0.0) {
+                        tu.hp = 0.0;
+                        if (!reg.has(target, "Dead")) { reg.emplaceTag(target, "Dead"); }
+                    }
+                    reg.emplace(target, "Unit", tu);
                 }
-                reg.emplace(target, "Unit", tu);
                 u.cooldownLeft = u.attackCooldown;
                 reg.emplace(attacker, "Unit", u);
             }

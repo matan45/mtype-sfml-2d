@@ -140,6 +140,34 @@ class Render {
                 front.setFillColor(220, 200, 90, 230);
                 front.setOutlineThickness(0.0);
                 Draw::rect(win, front);
+            } else {
+                // Damaged building: HP bar above.
+                float bhp  = snap.buildingHp[i];
+                float bmhp = snap.buildingMaxHp[i];
+                if (bhp < bmhp && bmhp > 0.0001) {
+                    float frac = bhp / bmhp;
+                    if (frac < 0.0) { frac = 0.0; }
+                    if (frac > 1.0) { frac = 1.0; }
+                    float bw = hw * 1.6;
+                    float bh = 0.18;
+                    float pbx = bx - bw * 0.5;
+                    float pby = by - hh - 0.5;
+                    RectangleShape back = p.hpBack;
+                    back.setSize(bw, bh);
+                    back.setOrigin(0.0, 0.0);
+                    back.setPosition(pbx, pby);
+                    back.setFillColor(60, 20, 20, 230);
+                    back.setOutlineThickness(0.0);
+                    Draw::rect(win, back);
+
+                    RectangleShape front = p.hpFront;
+                    front.setSize(bw * frac, bh);
+                    front.setOrigin(0.0, 0.0);
+                    front.setPosition(pbx, pby);
+                    front.setFillColor(80, 220, 100, 230);
+                    front.setOutlineThickness(0.0);
+                    Draw::rect(win, front);
+                }
             }
             i = i + 1;
         }

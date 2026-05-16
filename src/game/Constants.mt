@@ -16,8 +16,10 @@ class Cat {
     public static function unitMask():    int { return 1 | 8 | 16 | 2 | 4; }
     // mask used by player-only AABB picking — units + buildings.
     public static function playerPickMask(): int { return 2 | 8; }
-    // mask for static buildings: collide with terrain + any unit.
-    public static function buildingMask(): int { return 1 | 2 | 4; }
+    // mask for static buildings: collide with terrain + any unit, and
+    // accept sensor-category overlaps so grunt range-sensors can detect
+    // buildings as attack targets.
+    public static function buildingMask(): int { return 1 | 2 | 4 | 32; }
     // mask for resource piles: collide with any unit.
     public static function resourceMask(): int { return 2 | 4; }
 }
@@ -105,6 +107,15 @@ class GameConst {
     public static function startingMinerals(): int   { return 250; }
 
     public static function buildProximity():   float { return 1.5; }
+
+    // Largest half-extent of a building's footprint by kind. Used by Combat
+    // to widen attack reach against box-shaped buildings (otherwise the
+    // attacker bumps the body but reach is measured center-to-center).
+    public static function buildingHalfExtent(int kind): float {
+        if (kind == BuildingKind::barracks()) { return GameConst::barracksHalfW(); }
+        if (kind == BuildingKind::refinery()) { return GameConst::refineryHalfW(); }
+        return GameConst::baseHalfW();
+    }
 
     public static function fixedDt():    float { return 0.01666667; }
     public static function physSubSteps(): int { return 4; }

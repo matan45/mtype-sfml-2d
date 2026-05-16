@@ -87,6 +87,32 @@ class Commands {
         return 0;
     }
 
+    // Building-category pick filtered to enemy-faction buildings (real,
+    // not ghost). Used so a right-click sends grunts to attack hostile
+    // structures.
+    public static function pickEnemyBuilding(Registry reg, World world,
+                                               float wx, float wy): int {
+        int[] hits = Query::overlapAABB(world,
+                                          wx - 0.4, wy - 0.4, wx + 0.4, wy + 0.4,
+                                          Cat::all(), Cat::building());
+        int n = hits.length;
+        int i = 0;
+        while (i < n) {
+            Shape sh = new Shape(hits[i]);
+            int bh = sh.body();
+            if (bh != 0) {
+                Body b = new Body(bh);
+                int e = b.userDataInt();
+                if (reg.valid(e) && reg.has(e, "Building") && !reg.has(e, "Ghost")) {
+                    Building bld = (Building) reg.get(e, "Building");
+                    if (bld.faction == Faction::enemy()) { return e; }
+                }
+            }
+            i = i + 1;
+        }
+        return 0;
+    }
+
     // Building-category pick filtered to entities with a Refinery component
     // (i.e. completed refineries, not other buildings).
     public static function pickRefinery(Registry reg, World world,
@@ -128,19 +154,23 @@ class Commands {
         float wy = cw[1];
 
         int enemy = Commands::pickEntity(reg, world, wx, wy, Cat::unitEnemy());
+        int enemyBldg = 0;
         int ghost = 0;
         int refinery = 0;
         int mineral = 0;
         if (enemy == 0) {
-            ghost = Commands::pickGhost(reg, world, wx, wy);
-            if (ghost == 0) {
-                refinery = Commands::pickRefinery(reg, world, wx, wy);
-                if (refinery == 0) {
-                    mineral = Commands::pickEntity(reg, world, wx, wy, Cat::resource());
-                    // Disqualify gas geysers — workers can only harvest gas
-                    // through a refinery, not the bare geyser.
-                    if (mineral != 0 && reg.has(mineral, "GasGeyser")) {
-                        mineral = 0;
+            enemyBldg = Commands::pickEnemyBuilding(reg, world, wx, wy);
+            if (enemyBldg == 0) {
+                ghost = Commands::pickGhost(reg, world, wx, wy);
+                if (ghost == 0) {
+                    refinery = Commands::pickRefinery(reg, world, wx, wy);
+                    if (refinery == 0) {
+                        mineral = Commands::pickEntity(reg, world, wx, wy, Cat::resource());
+                        // Disqualify gas geysers — workers can only harvest gas
+                        // through a refinery, not the bare geyser.
+                        if (mineral != 0 && reg.has(mineral, "GasGeyser")) {
+                            mineral = 0;
+                        }
                     }
                 }
             }
@@ -168,6 +198,15 @@ class Commands {
                 ao.targetEntity = enemy;
                 reg.emplace(e, "AttackOrder", ao);
                 Body? tb = Commands::bodyOf(reg, enemy);
+                if (tb != null) {
+                    float[] tp = tb.position();
+                    Commands::setMove(reg, e, pb.bodyHandle, tp[0], tp[1], world);
+                }
+            } else if (enemyBldg != 0 && u.attackDamage > 0.0) {
+                AttackOrder ao = new AttackOrder();
+                ao.targetEntity = enemyBldg;
+                reg.emplace(e, "AttackOrder", ao);
+                Body? tb = Commands::bodyOf(reg, enemyBldg);
                 if (tb != null) {
                     float[] tp = tb.position();
                     Commands::setMove(reg, e, pb.bodyHandle, tp[0], tp[1], world);
