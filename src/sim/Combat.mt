@@ -124,11 +124,41 @@ class Gather {
             float[] p = b.position();
 
             if (c.amount == 0) {
-                // Heading to the mineral pile.
+                // Heading to the source (mineral pile, or refinery for gas).
                 if (!reg.valid(c.sourceNode)) { reg.remove(e, "Carrying"); e = v.next(); continue; }
-                ResourceNode rn = (ResourceNode) reg.get(c.sourceNode, "ResourceNode");
-                float dx = rn.x - p[0];
-                float dy = rn.y - p[1];
+
+                // Resolve gather position and the entity holding the amount.
+                // For minerals, sourceNode IS the ResourceNode entity.
+                // For gas, sourceNode is the refinery; the geyser holds amount.
+                float gx = 0.0;
+                float gy = 0.0;
+                int   amountEntity = 0;
+                if (c.kind == ResourceKind::gas()) {
+                    if (!reg.has(c.sourceNode, "Refinery")) {
+                        reg.remove(e, "Carrying"); e = v.next(); continue;
+                    }
+                    Refinery rf = (Refinery) reg.get(c.sourceNode, "Refinery");
+                    if (!reg.valid(rf.geyserEntity)) {
+                        reg.remove(e, "Carrying"); e = v.next(); continue;
+                    }
+                    amountEntity = rf.geyserEntity;
+                    PhysicsBody rpb = (PhysicsBody) reg.get(c.sourceNode, "PhysicsBody");
+                    Body rb = new Body(rpb.bodyHandle);
+                    float[] rp = rb.position();
+                    gx = rp[0];
+                    gy = rp[1];
+                } else {
+                    if (!reg.has(c.sourceNode, "ResourceNode")) {
+                        reg.remove(e, "Carrying"); e = v.next(); continue;
+                    }
+                    amountEntity = c.sourceNode;
+                    ResourceNode rn = (ResourceNode) reg.get(amountEntity, "ResourceNode");
+                    gx = rn.x;
+                    gy = rn.y;
+                }
+
+                float dx = gx - p[0];
+                float dy = gy - p[1];
                 float d2 = dx * dx + dy * dy;
                 if (d2 <= 2.25) {
                     b.setLinearVelocity(0.0, 0.0);
@@ -138,12 +168,13 @@ class Gather {
                     }
                     c.gatherLeft = c.gatherLeft - dt;
                     if (c.gatherLeft <= 0.0) {
+                        ResourceNode rn = (ResourceNode) reg.get(amountEntity, "ResourceNode");
                         int take = GameConst::workerGatherAmount();
                         if (rn.amount < take) { take = rn.amount; }
                         c.amount = take;
                         rn.amount = rn.amount - take;
                         c.gatherLeft = GameConst::workerGatherTime();
-                        reg.emplace(c.sourceNode, "ResourceNode", rn);
+                        reg.emplace(amountEntity, "ResourceNode", rn);
                         Gather::orderToward(reg, world, e, pb.bodyHandle, p, c.homeBase);
                     }
                     reg.emplace(e, "Carrying", c);
@@ -151,15 +182,20 @@ class Gather {
                     Gather::orderToward(reg, world, e, pb.bodyHandle, p, c.sourceNode);
                 }
             } else {
-                // Carrying ore — head to the base to drop it off.
+                // Carrying — head to the base to drop it off.
                 if (!reg.valid(c.homeBase)) { reg.remove(e, "Carrying"); e = v.next(); continue; }
                 Building bld = (Building) reg.get(c.homeBase, "Building");
                 float dx = bld.rallyX - p[0];
                 float dy = bld.rallyY - p[1];
                 float d2 = dx * dx + dy * dy;
                 if (d2 <= 6.25) {
-                    int cur = reg.ctxGetInt("minerals");
-                    reg.ctxSetInt("minerals", cur + c.amount);
+                    if (c.kind == ResourceKind::gas()) {
+                        int cur = reg.ctxGetInt("gas");
+                        reg.ctxSetInt("gas", cur + c.amount);
+                    } else {
+                        int cur = reg.ctxGetInt("minerals");
+                        reg.ctxSetInt("minerals", cur + c.amount);
+                    }
                     c.amount = 0;
                     reg.emplace(e, "Carrying", c);
                     b.setLinearVelocity(0.0, 0.0);

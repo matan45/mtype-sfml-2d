@@ -33,7 +33,15 @@ class UnitKind {
 }
 
 class BuildingKind {
-    public static function base(): int { return 1; }
+    public static function base():          int { return 1; }
+    public static function barracks():      int { return 2; }
+    public static function refinery():      int { return 3; }
+    public static function commandCenter(): int { return 4; }
+}
+
+class ResourceKind {
+    public static function minerals(): int { return 1; }
+    public static function gas():      int { return 2; }
 }
 
 // World is 64 m square centered on origin; tile grid is 1 m, so 64x64 cells.
@@ -62,13 +70,41 @@ class GameConst {
     public static function baseRallyDx():     float { return 0.0; }
     public static function baseRallyDy():     float { return 3.0; }
 
+    public static function barracksHalfW():     float { return 2.0; }
+    public static function barracksHalfH():     float { return 2.0; }
+    public static function barracksHp():        float { return 400.0; }
+    public static function barracksRallyDy():   float { return 2.5; }
+    public static function barracksCost():      int   { return 150; }
+    public static function barracksBuildTime(): float { return 12.0; }
+
+    public static function refineryHalfW():     float { return 1.5; }
+    public static function refineryHalfH():     float { return 1.5; }
+    public static function refineryHp():        float { return 300.0; }
+    public static function refineryCost():      int   { return 75; }
+    public static function refineryBuildTime(): float { return 8.0; }
+    public static function refinerySnapRadius(): float { return 1.5; }
+
+    // Command Center = an additional Base. Built by workers near remote
+    // resources so they have a closer drop-off building.
+    public static function commandCenterCost():      int   { return 200; }
+    public static function commandCenterBuildTime(): float { return 18.0; }
+
     public static function resourceHalfW():   float { return 1.0; }
     public static function resourceHalfH():   float { return 1.0; }
     public static function resourceStartAmt(): int  { return 1000; }
 
+    public static function gasNodeHalfW():    float { return 1.0; }
+    public static function gasNodeHalfH():    float { return 1.0; }
+    public static function gasStartAmt():     int   { return 1500; }
+
     public static function workerCost():       int   { return 50; }
     public static function workerBuildTime():  float { return 3.0; }
-    public static function startingMinerals(): int   { return 50; }
+    public static function workerCarryCap():   int   { return 5; }
+    public static function gruntCost():        int   { return 75; }
+    public static function gruntBuildTime():   float { return 4.0; }
+    public static function startingMinerals(): int   { return 250; }
+
+    public static function buildProximity():   float { return 1.5; }
 
     public static function fixedDt():    float { return 0.01666667; }
     public static function physSubSteps(): int { return 4; }

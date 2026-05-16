@@ -7,6 +7,8 @@
 
 import * from "@mtype-entt/Entt.mt";
 
+import * from "../game/Constants.mt";
+
 class PhysicsBody {
     public int bodyHandle;
 }
@@ -55,6 +57,7 @@ class ResourceNode {
     public int   amount;
     public float x;
     public float y;
+    public int   kind;
 }
 
 class Carrying {
@@ -62,10 +65,26 @@ class Carrying {
     public int   homeBase;
     public int   sourceNode;
     public float gatherLeft;
+    public int   kind;
 }
 
 class RangeSensor {
     public int sensorShapeHandle;
+}
+
+class Construction {
+    public int   buildingKind;
+    public float progress;
+    public float buildTime;
+    public int   geyserEntity;
+}
+
+class ConstructOrder {
+    public int targetEntity;
+}
+
+class Refinery {
+    public int geyserEntity;
 }
 
 class Schema {
@@ -105,18 +124,33 @@ class Schema {
                        Entts::fieldInt(),   Entts::fieldFloat(), Entts::fieldFloat()];
         reg.registerComponent("Building", "Building", fB, tB);
 
-        string[] fR = ["amount","x","y"];
-        int[]    tR = [Entts::fieldInt(), Entts::fieldFloat(), Entts::fieldFloat()];
+        string[] fR = ["amount","x","y","kind"];
+        int[]    tR = [Entts::fieldInt(), Entts::fieldFloat(), Entts::fieldFloat(),
+                       Entts::fieldInt()];
         reg.registerComponent("ResourceNode", "ResourceNode", fR, tR);
 
-        string[] fC = ["amount","homeBase","sourceNode","gatherLeft"];
-        int[]    tC = [Entts::fieldInt(), Entts::fieldInt(),
-                       Entts::fieldInt(), Entts::fieldFloat()];
+        string[] fC = ["amount","homeBase","sourceNode","gatherLeft","kind"];
+        int[]    tC = [Entts::fieldInt(),   Entts::fieldInt(),
+                       Entts::fieldInt(),   Entts::fieldFloat(),
+                       Entts::fieldInt()];
         reg.registerComponent("Carrying", "Carrying", fC, tC);
 
         string[] fRS = ["sensorShapeHandle"];
         int[]    tRS = [Entts::fieldInt()];
         reg.registerComponent("RangeSensor", "RangeSensor", fRS, tRS);
+
+        string[] fCn = ["buildingKind","progress","buildTime","geyserEntity"];
+        int[]    tCn = [Entts::fieldInt(),   Entts::fieldFloat(),
+                        Entts::fieldFloat(), Entts::fieldInt()];
+        reg.registerComponent("Construction", "Construction", fCn, tCn);
+
+        string[] fCo = ["targetEntity"];
+        int[]    tCo = [Entts::fieldInt()];
+        reg.registerComponent("ConstructOrder", "ConstructOrder", fCo, tCo);
+
+        string[] fRf = ["geyserEntity"];
+        int[]    tRf = [Entts::fieldInt()];
+        reg.registerComponent("Refinery", "Refinery", fRf, tRf);
 
         // ---- tag components ----
         reg.registerTag("Selected");
@@ -126,10 +160,16 @@ class Schema {
         reg.registerTag("Worker");
         reg.registerTag("Grunt");
         reg.registerTag("BaseBuilding");
+        reg.registerTag("Barracks");
+        reg.registerTag("RefineryTag");
+        reg.registerTag("CommandCenterTag");
+        reg.registerTag("GasGeyser");
+        reg.registerTag("Ghost");
         reg.registerTag("HasPath");
         reg.registerTag("Gathering");
 
         // ---- ctx vars ----
-        reg.ctxSetInt("minerals", 50);
+        reg.ctxSetInt("minerals", GameConst::startingMinerals());
+        reg.ctxSetInt("gas", 0);
     }
 }

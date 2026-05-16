@@ -41,6 +41,74 @@ class Commands {
         return 0;
     }
 
+    // Return the player BaseBuilding (initial Base or completed Command
+    // Center) closest to (wx, wy). 0 if none exist.
+    public static function findNearestHomeBase(Registry reg, float wx, float wy): int {
+        string[] need = ["BaseBuilding", "Building", "PhysicsBody"];
+        EnttView v = reg.view(need);
+        int best = 0;
+        float bestD2 = 1000000000.0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) {
+                PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
+                Body b = new Body(pb.bodyHandle);
+                float[] p = b.position();
+                float dx = p[0] - wx;
+                float dy = p[1] - wy;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < bestD2) { bestD2 = d2; best = e; }
+            }
+            e = v.next();
+        }
+        v.destroy();
+        return best;
+    }
+
+    // Sensor-category AABB pick filtered to entities with the Ghost tag.
+    // Necessary because grunt range-sensors also live in Cat::sensor().
+    public static function pickGhost(Registry reg, World world,
+                                       float wx, float wy): int {
+        int[] hits = Query::overlapAABB(world,
+                                          wx - 0.4, wy - 0.4, wx + 0.4, wy + 0.4,
+                                          Cat::all(), Cat::sensor());
+        int n = hits.length;
+        int i = 0;
+        while (i < n) {
+            Shape sh = new Shape(hits[i]);
+            int bh = sh.body();
+            if (bh != 0) {
+                Body b = new Body(bh);
+                int e = b.userDataInt();
+                if (reg.valid(e) && reg.has(e, "Ghost")) { return e; }
+            }
+            i = i + 1;
+        }
+        return 0;
+    }
+
+    // Building-category pick filtered to entities with a Refinery component
+    // (i.e. completed refineries, not other buildings).
+    public static function pickRefinery(Registry reg, World world,
+                                          float wx, float wy): int {
+        int[] hits = Query::overlapAABB(world,
+                                          wx - 0.4, wy - 0.4, wx + 0.4, wy + 0.4,
+                                          Cat::all(), Cat::building());
+        int n = hits.length;
+        int i = 0;
+        while (i < n) {
+            Shape sh = new Shape(hits[i]);
+            int bh = sh.body();
+            if (bh != 0) {
+                Body b = new Body(bh);
+                int e = b.userDataInt();
+                if (reg.valid(e) && reg.has(e, "Refinery")) { return e; }
+            }
+            i = i + 1;
+        }
+        return 0;
+    }
+
     // Snapshot selected player units that can receive a move/attack/gather
     // order. Returns an int[] of entity ids.
     public static function selectedUnits(Registry reg): int[] {
@@ -60,16 +128,27 @@ class Commands {
         float wy = cw[1];
 
         int enemy = Commands::pickEntity(reg, world, wx, wy, Cat::unitEnemy());
+        int ghost = 0;
+        int refinery = 0;
         int mineral = 0;
         if (enemy == 0) {
-            mineral = Commands::pickEntity(reg, world, wx, wy, Cat::resource());
+            ghost = Commands::pickGhost(reg, world, wx, wy);
+            if (ghost == 0) {
+                refinery = Commands::pickRefinery(reg, world, wx, wy);
+                if (refinery == 0) {
+                    mineral = Commands::pickEntity(reg, world, wx, wy, Cat::resource());
+                    // Disqualify gas geysers — workers can only harvest gas
+                    // through a refinery, not the bare geyser.
+                    if (mineral != 0 && reg.has(mineral, "GasGeyser")) {
+                        mineral = 0;
+                    }
+                }
+            }
         }
 
         int[] units = Commands::selectedUnits(reg);
         int n = units.length;
         if (n == 0) { return; }
-
-        int baseEntity = reg.ctxGetInt("baseEntity");
 
         int i = 0;
         while (i < n) {
@@ -77,9 +156,10 @@ class Commands {
             Unit u = (Unit) reg.get(e, "Unit");
 
             // Clear any prior order before issuing a new one.
-            if (reg.has(e, "Carrying"))    { reg.remove(e, "Carrying"); }
-            if (reg.has(e, "AttackOrder")) { reg.remove(e, "AttackOrder"); }
-            if (reg.has(e, "Gathering"))   { reg.remove(e, "Gathering"); }
+            if (reg.has(e, "Carrying"))        { reg.remove(e, "Carrying"); }
+            if (reg.has(e, "AttackOrder"))     { reg.remove(e, "AttackOrder"); }
+            if (reg.has(e, "ConstructOrder"))  { reg.remove(e, "ConstructOrder"); }
+            if (reg.has(e, "Gathering"))       { reg.remove(e, "Gathering"); }
 
             PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
 
@@ -92,13 +172,43 @@ class Commands {
                     float[] tp = tb.position();
                     Commands::setMove(reg, e, pb.bodyHandle, tp[0], tp[1], world);
                 }
-            } else if (mineral != 0 && u.kind == UnitKind::worker()) {
-                ResourceNode rn = (ResourceNode) reg.get(mineral, "ResourceNode");
+            } else if (ghost != 0 && u.kind == UnitKind::worker()) {
+                ConstructOrder co = new ConstructOrder();
+                co.targetEntity = ghost;
+                reg.emplace(e, "ConstructOrder", co);
+                Body? gb = Commands::bodyOf(reg, ghost);
+                if (gb != null) {
+                    float[] gp = gb.position();
+                    Commands::setMove(reg, e, pb.bodyHandle, gp[0], gp[1], world);
+                }
+            } else if (refinery != 0 && u.kind == UnitKind::worker()) {
+                Body wb = new Body(pb.bodyHandle);
+                float[] wp = wb.position();
+                int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
                 Carrying c = new Carrying();
                 c.amount = 0;
-                c.homeBase = baseEntity;
+                c.homeBase = homeE;
+                c.sourceNode = refinery;
+                c.gatherLeft = GameConst::workerGatherTime();
+                c.kind = ResourceKind::gas();
+                reg.emplace(e, "Carrying", c);
+                reg.emplaceTag(e, "Gathering");
+                Body? rb = Commands::bodyOf(reg, refinery);
+                if (rb != null) {
+                    float[] rp = rb.position();
+                    Commands::setMove(reg, e, pb.bodyHandle, rp[0], rp[1], world);
+                }
+            } else if (mineral != 0 && u.kind == UnitKind::worker()) {
+                ResourceNode rn = (ResourceNode) reg.get(mineral, "ResourceNode");
+                Body wb = new Body(pb.bodyHandle);
+                float[] wp = wb.position();
+                int homeE = Commands::findNearestHomeBase(reg, wp[0], wp[1]);
+                Carrying c = new Carrying();
+                c.amount = 0;
+                c.homeBase = homeE;
                 c.sourceNode = mineral;
                 c.gatherLeft = GameConst::workerGatherTime();
+                c.kind = ResourceKind::minerals();
                 reg.emplace(e, "Carrying", c);
                 reg.emplaceTag(e, "Gathering");
                 Commands::setMove(reg, e, pb.bodyHandle, rn.x, rn.y, world);
