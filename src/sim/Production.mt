@@ -5,6 +5,7 @@ import * from "@mtype-entt/Entt.mt";
 import * from "@mtype-box2d/Box2D.mt";
 
 import * from "../game/Constants.mt";
+import * from "../audio/Audio.mt";
 import * from "./Schema.mt";
 import * from "./Spawn.mt";
 
@@ -31,6 +32,7 @@ class Production {
                     } else {
                         Spawn::worker(reg, world, b.rallyX, b.rallyY);
                     }
+                    Audio::playChord();
                 }
                 reg.emplace(e, "Building", b);
             }

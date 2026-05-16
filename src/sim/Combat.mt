@@ -10,6 +10,7 @@ import * from "@mtype-entt/Entt.mt";
 import * from "@mtype-box2d/Body.mt";
 
 import * from "../game/Constants.mt";
+import * from "../audio/Audio.mt";
 import * from "./Schema.mt";
 import * from "./Events.mt";
 import * from "./Pathing.mt";
@@ -196,6 +197,7 @@ class Gather {
                         int cur = reg.ctxGetInt("minerals");
                         reg.ctxSetInt("minerals", cur + c.amount);
                     }
+                    Audio::playDing();
                     c.amount = 0;
                     reg.emplace(e, "Carrying", c);
                     b.setLinearVelocity(0.0, 0.0);

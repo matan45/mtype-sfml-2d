@@ -12,6 +12,8 @@ import * from "@mtype-entt/Entt.mt";
 
 import * from "../game/Constants.mt";
 
+import * from "../audio/Audio.mt";
+
 import * from "../input/Input.mt";
 import * from "../input/Selection.mt";
 
@@ -39,6 +41,7 @@ class App {
         __plugin_load("mt_modules/@mtype-sfml/mt/mtype_sfml.dll");
         __plugin_load("mt_modules/@mtype-box2d/mt/mtype_b2d.dll");
         __plugin_load("mt_modules/@mtype-entt/mt/mtype_entt.dll");
+        Audio::init();
         int W = 1280;
         int H = 720;
         RenderWindow win = Sfml::createWindow("RTS-MVP", W, H);
@@ -148,6 +151,7 @@ class App {
             win.display();
         }
 
+        Audio::shutdown();
         ImGui::shutdown();
         view.destroy();
         reg.destroy();

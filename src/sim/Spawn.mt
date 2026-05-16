@@ -9,6 +9,7 @@ import * from "@mtype-box2d/Body.mt";
 import * from "@mtype-box2d/Shape.mt";
 
 import * from "../game/Constants.mt";
+import * from "../audio/Audio.mt";
 import * from "./Schema.mt";
 import * from "./Pathing.mt";
 
@@ -403,6 +404,7 @@ class Spawn {
         }
 
         Pathing::blockArea(px - halfW, py - halfH, px + halfW, py + halfH, true);
+        Audio::playTada();
     }
 
     // Initial map: 1 base, 4 workers around it, 1 mineral pile, 1 gas
