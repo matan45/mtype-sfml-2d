@@ -187,6 +187,7 @@ class Spawn {
         rn.amount = amount;
         rn.x = x;
         rn.y = y;
+        rn.kind = ResourceKind::minerals();
         reg.emplace(e, "ResourceNode", rn);
 
         Selectable sel = new Selectable();
@@ -198,8 +199,195 @@ class Spawn {
         return e;
     }
 
-    // Initial map: 1 base, 4 workers around it, 1 mineral pile, 2 grunts.
-    // Stores base + mineral entity ids in ctx vars so workers know defaults.
+    // Gas geyser — static box, solid, distinct from mineral pile. Workers
+    // cannot harvest it directly; a Refinery must be built on top.
+    public static function gasGeyser(Registry reg, World world,
+                                       float x, float y, int amount): int {
+        int e = reg.create();
+
+        BodyDef bd = new BodyDef();
+        bd.setType(BodyType::staticBody());
+        bd.setPosition(x, y);
+        Body b = Bodies::create(world, bd);
+        bd.destroy();
+        b.setUserDataInt(e);
+
+        ShapeDef sd = new ShapeDef();
+        sd.setFilter(Cat::resource(), Cat::resourceMask(), 0);
+        Shape sh = Shapes::createBox(b, sd, GameConst::gasNodeHalfW(), GameConst::gasNodeHalfH());
+        sd.destroy();
+
+        PhysicsBody pb = new PhysicsBody();
+        pb.bodyHandle = b.handle;
+        reg.emplace(e, "PhysicsBody", pb);
+
+        ResourceNode rn = new ResourceNode();
+        rn.amount = amount;
+        rn.x = x;
+        rn.y = y;
+        rn.kind = ResourceKind::gas();
+        reg.emplace(e, "ResourceNode", rn);
+
+        Selectable sel = new Selectable();
+        sel.radius = GameConst::gasNodeHalfW() + 0.2;
+        reg.emplace(e, "Selectable", sel);
+
+        Pathing::blockArea(x - GameConst::gasNodeHalfW(), y - GameConst::gasNodeHalfH(),
+                            x + GameConst::gasNodeHalfW(), y + GameConst::gasNodeHalfH(), true);
+
+        reg.emplaceTag(e, "GasGeyser");
+        return e;
+    }
+
+    // Barracks ghost — sensor body so workers can walk through to build it.
+    // Holds Building (with hp=1 so HP bar is full bar at 1/maxHp until
+    // completion swaps it) + Construction. completeConstruction promotes it.
+    public static function barracksGhost(Registry reg, World world,
+                                            float x, float y): int {
+        return Spawn::buildingGhost(reg, world, x, y,
+                                     BuildingKind::barracks(),
+                                     GameConst::barracksHalfW(),
+                                     GameConst::barracksHalfH(),
+                                     GameConst::barracksHp(),
+                                     GameConst::barracksRallyDy(),
+                                     GameConst::barracksBuildTime(),
+                                     0,
+                                     "Barracks");
+    }
+
+    public static function refineryGhost(Registry reg, World world,
+                                           float x, float y, int geyserEntity): int {
+        return Spawn::buildingGhost(reg, world, x, y,
+                                     BuildingKind::refinery(),
+                                     GameConst::refineryHalfW(),
+                                     GameConst::refineryHalfH(),
+                                     GameConst::refineryHp(),
+                                     0.0,
+                                     GameConst::refineryBuildTime(),
+                                     geyserEntity,
+                                     "RefineryTag");
+    }
+
+    // Shared ghost builder. `tag` is the per-kind discriminator tag.
+    public static function buildingGhost(Registry reg, World world,
+                                           float x, float y, int kind,
+                                           float halfW, float halfH,
+                                           float maxHp, float rallyDy,
+                                           float buildTime, int geyserEntity,
+                                           string tag): int {
+        int e = reg.create();
+
+        BodyDef bd = new BodyDef();
+        bd.setType(BodyType::staticBody());
+        bd.setPosition(x, y);
+        Body b = Bodies::create(world, bd);
+        bd.destroy();
+        b.setUserDataInt(e);
+
+        ShapeDef sd = new ShapeDef();
+        sd.setIsSensor(true);
+        sd.setFilter(Cat::sensor(), Cat::unitPlayer(), 0);
+        Shape sh = Shapes::createBox(b, sd, halfW, halfH);
+        sd.destroy();
+
+        PhysicsBody pb = new PhysicsBody();
+        pb.bodyHandle = b.handle;
+        reg.emplace(e, "PhysicsBody", pb);
+
+        Building bldg = new Building();
+        bldg.kind = kind;
+        bldg.faction = Faction::player();
+        bldg.hp = 1.0;
+        bldg.maxHp = maxHp;
+        bldg.producing = 0;
+        bldg.buildLeft = 0.0;
+        bldg.queueLen = 0;
+        bldg.rallyX = x;
+        bldg.rallyY = y + rallyDy;
+        reg.emplace(e, "Building", bldg);
+
+        Construction c = new Construction();
+        c.buildingKind = kind;
+        c.progress = 0.0;
+        c.buildTime = buildTime;
+        c.geyserEntity = geyserEntity;
+        reg.emplace(e, "Construction", c);
+
+        Selectable sel = new Selectable();
+        sel.radius = halfW + 0.2;
+        reg.emplace(e, "Selectable", sel);
+
+        reg.emplaceTag(e, "Ghost");
+        reg.emplaceTag(e, "PlayerControlled");
+        reg.emplaceTag(e, tag);
+        return e;
+    }
+
+    // Promote a ghost into a real solid building: destroy its sensor body,
+    // create a solid one in the same place, fill HP, drop Construction/Ghost,
+    // attach Refinery if applicable, block its footprint for pathing.
+    public static function completeConstruction(Registry reg, World world,
+                                                  int ghostE): void {
+        if (!reg.valid(ghostE)) { return; }
+        if (!reg.has(ghostE, "Construction")) { return; }
+        if (!reg.has(ghostE, "Building"))     { return; }
+        if (!reg.has(ghostE, "PhysicsBody"))  { return; }
+
+        Construction c = (Construction) reg.get(ghostE, "Construction");
+        Building bldg = (Building) reg.get(ghostE, "Building");
+        PhysicsBody pb = (PhysicsBody) reg.get(ghostE, "PhysicsBody");
+        Body oldBody = new Body(pb.bodyHandle);
+        float[] p = oldBody.position();
+        float px = p[0];
+        float py = p[1];
+        oldBody.destroy();
+
+        float halfW = GameConst::barracksHalfW();
+        float halfH = GameConst::barracksHalfH();
+        float hp    = GameConst::barracksHp();
+        if (c.buildingKind == BuildingKind::refinery()) {
+            halfW = GameConst::refineryHalfW();
+            halfH = GameConst::refineryHalfH();
+            hp    = GameConst::refineryHp();
+        }
+
+        BodyDef bd = new BodyDef();
+        bd.setType(BodyType::staticBody());
+        bd.setPosition(px, py);
+        Body nb = Bodies::create(world, bd);
+        bd.destroy();
+        nb.setUserDataInt(ghostE);
+
+        ShapeDef sd = new ShapeDef();
+        sd.setFilter(Cat::building(), Cat::buildingMask(), 0);
+        Shape sh = Shapes::createBox(nb, sd, halfW, halfH);
+        sd.destroy();
+
+        pb.bodyHandle = nb.handle;
+        reg.emplace(ghostE, "PhysicsBody", pb);
+
+        bldg.hp = hp;
+        bldg.maxHp = hp;
+        reg.emplace(ghostE, "Building", bldg);
+
+        Selectable sel = new Selectable();
+        sel.radius = halfW + 0.2;
+        reg.emplace(ghostE, "Selectable", sel);
+
+        reg.remove(ghostE, "Construction");
+        reg.remove(ghostE, "Ghost");
+
+        if (c.buildingKind == BuildingKind::refinery()) {
+            Refinery rf = new Refinery();
+            rf.geyserEntity = c.geyserEntity;
+            reg.emplace(ghostE, "Refinery", rf);
+        }
+
+        Pathing::blockArea(px - halfW, py - halfH, px + halfW, py + halfH, true);
+    }
+
+    // Initial map: 1 base, 4 workers around it, 1 mineral pile, 1 gas
+    // geyser, 2 grunts. Stores base + mineral entity ids in ctx vars.
     public static function initialMap(Registry reg, World world): void {
         int baseE = Spawn::base(reg, world, 0.0, 0.0);
         reg.ctxSetInt("baseEntity", baseE);
@@ -211,6 +399,8 @@ class Spawn {
 
         int mineE = Spawn::resource(reg, world, 12.0, 0.0, GameConst::resourceStartAmt());
         reg.ctxSetInt("mineralEntity", mineE);
+
+        Spawn::gasGeyser(reg, world, -12.0, 8.0, GameConst::gasStartAmt());
 
         Spawn::grunt(reg, world, 24.0,  4.0);
         Spawn::grunt(reg, world, 26.0, -3.0);

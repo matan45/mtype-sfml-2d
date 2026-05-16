@@ -53,11 +53,35 @@ class Sampling {
             Body bd = new Body(pb.bodyHandle);
             float[] p = bd.position();
             if (n < snap.buildingX.length) {
+                float hw = GameConst::baseHalfW();
+                float hh = GameConst::baseHalfH();
+                if (b.kind == BuildingKind::barracks()) {
+                    hw = GameConst::barracksHalfW();
+                    hh = GameConst::barracksHalfH();
+                } else if (b.kind == BuildingKind::refinery()) {
+                    hw = GameConst::refineryHalfW();
+                    hh = GameConst::refineryHalfH();
+                }
                 snap.buildingX[n] = p[0];
                 snap.buildingY[n] = p[1];
-                snap.buildingHw[n] = GameConst::baseHalfW();
-                snap.buildingHh[n] = GameConst::baseHalfH();
+                snap.buildingHw[n] = hw;
+                snap.buildingHh[n] = hh;
                 snap.buildingFaction[n] = b.faction;
+                snap.buildingKind[n] = b.kind;
+                snap.buildingHp[n] = b.hp;
+                snap.buildingMaxHp[n] = b.maxHp;
+                if (reg.has(e, "Ghost")) {
+                    snap.buildingIsGhost[n] = 1;
+                    Construction c = (Construction) reg.get(e, "Construction");
+                    float frac = 0.0;
+                    if (c.buildTime > 0.0001) { frac = c.progress / c.buildTime; }
+                    if (frac < 0.0) { frac = 0.0; }
+                    if (frac > 1.0) { frac = 1.0; }
+                    snap.buildingProgress[n] = frac;
+                } else {
+                    snap.buildingIsGhost[n] = 0;
+                    snap.buildingProgress[n] = 0.0;
+                }
                 n = n + 1;
             }
             e = v.next();
@@ -74,10 +98,17 @@ class Sampling {
         while (e != 0) {
             ResourceNode rn = (ResourceNode) reg.get(e, "ResourceNode");
             if (n < snap.resourceX.length) {
+                float hw = GameConst::resourceHalfW();
+                float hh = GameConst::resourceHalfH();
+                if (rn.kind == ResourceKind::gas()) {
+                    hw = GameConst::gasNodeHalfW();
+                    hh = GameConst::gasNodeHalfH();
+                }
                 snap.resourceX[n] = rn.x;
                 snap.resourceY[n] = rn.y;
-                snap.resourceHw[n] = GameConst::resourceHalfW();
-                snap.resourceHh[n] = GameConst::resourceHalfH();
+                snap.resourceHw[n] = hw;
+                snap.resourceHh[n] = hh;
+                snap.resourceKind[n] = rn.kind;
                 n = n + 1;
             }
             e = v.next();
@@ -100,7 +131,11 @@ class Sampling {
                 Unit u = (Unit) reg.get(e, "Unit");
                 radius = u.radius;
             } else if (reg.has(e, "Building")) {
-                radius = GameConst::baseHalfW() + 0.1;
+                Building bld = (Building) reg.get(e, "Building");
+                float hw = GameConst::baseHalfW();
+                if (bld.kind == BuildingKind::barracks()) { hw = GameConst::barracksHalfW(); }
+                else if (bld.kind == BuildingKind::refinery()) { hw = GameConst::refineryHalfW(); }
+                radius = hw + 0.1;
             }
             if (n < snap.selectedX.length) {
                 snap.selectedX[n] = p[0];

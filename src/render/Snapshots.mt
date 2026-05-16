@@ -19,6 +19,11 @@ class WorldSnapshot {
     public float[] buildingHw;
     public float[] buildingHh;
     public int[]   buildingFaction;
+    public int[]   buildingKind;
+    public float[] buildingHp;
+    public float[] buildingMaxHp;
+    public int[]   buildingIsGhost;
+    public float[] buildingProgress;
 
     // Resources
     public int     resourceCount;
@@ -26,6 +31,7 @@ class WorldSnapshot {
     public float[] resourceY;
     public float[] resourceHw;
     public float[] resourceHh;
+    public int[]   resourceKind;
 
     // Selected (any entity that has the Selected tag and a position)
     public int     selectedCount;
@@ -43,13 +49,18 @@ class WorldSnapshot {
         this.unitHp       = new float[cap];
         this.unitMaxHp    = new float[cap];
 
-        this.buildingCount    = 0;
+        this.buildingCount     = 0;
         int bcap = 64;
-        this.buildingX        = new float[bcap];
-        this.buildingY        = new float[bcap];
-        this.buildingHw       = new float[bcap];
-        this.buildingHh       = new float[bcap];
-        this.buildingFaction  = new int[bcap];
+        this.buildingX         = new float[bcap];
+        this.buildingY         = new float[bcap];
+        this.buildingHw        = new float[bcap];
+        this.buildingHh        = new float[bcap];
+        this.buildingFaction   = new int[bcap];
+        this.buildingKind      = new int[bcap];
+        this.buildingHp        = new float[bcap];
+        this.buildingMaxHp     = new float[bcap];
+        this.buildingIsGhost   = new int[bcap];
+        this.buildingProgress  = new float[bcap];
 
         this.resourceCount = 0;
         int rcap = 64;
@@ -57,6 +68,7 @@ class WorldSnapshot {
         this.resourceY     = new float[rcap];
         this.resourceHw    = new float[rcap];
         this.resourceHh    = new float[rcap];
+        this.resourceKind  = new int[rcap];
 
         this.selectedCount  = 0;
         this.selectedX      = new float[cap];

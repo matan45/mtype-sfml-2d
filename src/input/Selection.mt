@@ -121,7 +121,8 @@ class Selection {
                 int e = b.userDataInt();
                 if (reg.valid(e) && reg.has(e, "Selectable")
                                   && reg.has(e, "PlayerControlled")
-                                  && !reg.has(e, "BaseBuilding")) {
+                                  && !reg.has(e, "BaseBuilding")
+                                  && !reg.has(e, "Ghost")) {
                     reg.emplaceTag(e, "Selected");
                 }
             }

@@ -14,17 +14,23 @@ class Production {
         EnttView v = reg.view(need);
         int e = v.next();
         while (e != 0) {
+            if (reg.has(e, "Ghost")) { e = v.next(); continue; }
             Building b = (Building) reg.get(e, "Building");
             if (b.queueLen > 0) {
                 b.buildLeft = b.buildLeft - dt;
                 if (b.buildLeft <= 0.0) {
                     b.queueLen = b.queueLen - 1;
+                    float nextBuildTime = Production::buildTimeFor(b.kind);
                     if (b.queueLen > 0) {
-                        b.buildLeft = GameConst::workerBuildTime();
+                        b.buildLeft = nextBuildTime;
                     } else {
                         b.buildLeft = 0.0;
                     }
-                    Spawn::worker(reg, world, b.rallyX, b.rallyY);
+                    if (b.kind == BuildingKind::barracks()) {
+                        Spawn::grunt(reg, world, b.rallyX, b.rallyY);
+                    } else {
+                        Spawn::worker(reg, world, b.rallyX, b.rallyY);
+                    }
                 }
                 reg.emplace(e, "Building", b);
             }
@@ -33,20 +39,37 @@ class Production {
         v.destroy();
     }
 
-    // Called from the HUD when the user clicks Train Worker on a selected
-    // base. Deducts cost up front, queues a worker, kicks off the timer
-    // if this is the first item in the queue.
-    public static function tryQueueWorker(Registry reg, int baseEntity): bool {
-        if (!reg.valid(baseEntity)) { return false; }
-        if (!reg.has(baseEntity, "Building")) { return false; }
+    // Cost in minerals for the unit a given building produces.
+    public static function costFor(int buildingKind): int {
+        if (buildingKind == BuildingKind::barracks()) { return GameConst::gruntCost(); }
+        return GameConst::workerCost();
+    }
+
+    public static function buildTimeFor(int buildingKind): float {
+        if (buildingKind == BuildingKind::barracks()) { return GameConst::gruntBuildTime(); }
+        return GameConst::workerBuildTime();
+    }
+
+    // Queue one unit at this building. Caller already knows the building
+    // entity (HUD computes it from selection). Deducts cost up front.
+    public static function tryQueueUnit(Registry reg, int buildingEntity): bool {
+        if (!reg.valid(buildingEntity)) { return false; }
+        if (!reg.has(buildingEntity, "Building")) { return false; }
+        if (reg.has(buildingEntity, "Ghost")) { return false; }
+        Building b = (Building) reg.get(buildingEntity, "Building");
+        int cost = Production::costFor(b.kind);
         int minerals = reg.ctxGetInt("minerals");
-        if (minerals < GameConst::workerCost()) { return false; }
-        Building b = (Building) reg.get(baseEntity, "Building");
+        if (minerals < cost) { return false; }
         if (b.queueLen >= 5) { return false; }
-        reg.ctxSetInt("minerals", minerals - GameConst::workerCost());
-        if (b.queueLen == 0) { b.buildLeft = GameConst::workerBuildTime(); }
+        reg.ctxSetInt("minerals", minerals - cost);
+        if (b.queueLen == 0) { b.buildLeft = Production::buildTimeFor(b.kind); }
         b.queueLen = b.queueLen + 1;
-        reg.emplace(baseEntity, "Building", b);
+        reg.emplace(buildingEntity, "Building", b);
         return true;
+    }
+
+    // Back-compat wrapper.
+    public static function tryQueueWorker(Registry reg, int baseEntity): bool {
+        return Production::tryQueueUnit(reg, baseEntity);
     }
 }

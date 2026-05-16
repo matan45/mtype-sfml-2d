@@ -26,6 +26,8 @@ import * from "../sim/Pathing.mt";
 import * from "../sim/Steering.mt";
 import * from "../sim/Events.mt";
 import * from "../sim/Combat.mt";
+import * from "../sim/Construct.mt";
+import * from "../sim/Placement.mt";
 import * from "../sim/Production.mt";
 import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
@@ -56,6 +58,7 @@ class App {
         Clock clk = Clocks::create();
         InputState in = new InputState();
         SelectionState sel = new SelectionState();
+        PlacementState pls = new PlacementState();
         WorldSnapshot snap = new WorldSnapshot();
 
         float acc       = 0.0;
@@ -67,6 +70,7 @@ class App {
         while (win.isOpen()) {
             Input::pump(win, in);
             if (in.quitRequested) { win.close(); }
+            Placement::update(reg, world, win, cam, in, pls);
             Selection::update(reg, world, win, cam, in, sel);
 
             float frame = clk.restartSeconds();
@@ -81,6 +85,7 @@ class App {
                 Commands::apply(reg, world, win, cam, in);
                 Combat::run(reg, world, fixedDt);
                 Gather::run(reg, world, fixedDt);
+                Construct::run(reg, world, fixedDt);
                 Steering::run(reg, fixedDt);
                 world.step(fixedDt, subSteps);
                 Events::drain(world);
@@ -97,24 +102,46 @@ class App {
 
             int baseE       = reg.ctxGetInt("baseEntity");
             int selBase     = App::selectedBase(reg, baseE);
-            int queueLen    = 0;
-            float buildLeft = 0.0;
+            int baseQueueLen    = 0;
+            float baseBuildLeft = 0.0;
             if (selBase != 0) {
                 Building b = (Building) reg.get(selBase, "Building");
-                queueLen  = b.queueLen;
-                buildLeft = b.buildLeft;
+                baseQueueLen  = b.queueLen;
+                baseBuildLeft = b.buildLeft;
             }
+            int selBarracks = App::selectedBarracks(reg);
+            int barracksQueueLen    = 0;
+            float barracksBuildLeft = 0.0;
+            if (selBarracks != 0) {
+                Building b = (Building) reg.get(selBarracks, "Building");
+                barracksQueueLen  = b.queueLen;
+                barracksBuildLeft = b.buildLeft;
+            }
+            int selectedWorkerCount = App::countSelectedWorkers(reg);
+
             int minerals = reg.ctxGetInt("minerals");
-            HudResult hr = Hud::draw(minerals, fpsAvg, snap.selectedCount,
-                                       selBase, queueLen, buildLeft,
-                                       GameConst::workerCost(), in.debugDraw);
+            int gas      = reg.ctxGetInt("gas");
+            HudResult hr = Hud::draw(minerals, gas, fpsAvg,
+                                       snap.selectedCount, selectedWorkerCount,
+                                       selBase, baseQueueLen, baseBuildLeft,
+                                       selBarracks, barracksQueueLen, barracksBuildLeft,
+                                       in.debugDraw);
             in.debugDraw = hr.newDebugDraw;
             if (hr.trainWorkerClicked && selBase != 0) {
-                Production::tryQueueWorker(reg, selBase);
+                Production::tryQueueUnit(reg, selBase);
+            }
+            if (hr.trainGruntClicked && selBarracks != 0) {
+                Production::tryQueueUnit(reg, selBarracks);
+            }
+            if (hr.placeBarracksClicked && !pls.active) {
+                pls.start(BuildingKind::barracks());
+            }
+            if (hr.placeRefineryClicked && !pls.active) {
+                pls.start(BuildingKind::refinery());
             }
 
             win.clear(28, 32, 38, 255);
-            Render::world(win, view, cam, snap, world, in, sel);
+            Render::world(win, view, cam, snap, world, in, sel, pls);
             ImGui::render(win);
             win.display();
         }
@@ -137,5 +164,32 @@ class App {
         if (!reg.valid(baseE)) { return 0; }
         if (reg.has(baseE, "Selected")) { return baseE; }
         return 0;
+    }
+
+    // First Selected barracks (real, not ghost). Used by the HUD to surface
+    // the Train Grunt panel.
+    public static function selectedBarracks(Registry reg): int {
+        string[] need = ["Selected", "Building", "Barracks"];
+        EnttView v = reg.view(need);
+        int found = 0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) { found = e; }
+            e = v.next();
+        }
+        v.destroy();
+        return found;
+    }
+
+    // Number of Selected player workers. Drives the visibility of the
+    // Build panel.
+    public static function countSelectedWorkers(Registry reg): int {
+        string[] need = ["Selected", "Unit", "Worker"];
+        EnttView v = reg.view(need);
+        int n = 0;
+        int e = v.next();
+        while (e != 0) { n = n + 1; e = v.next(); }
+        v.destroy();
+        return n;
     }
 }
