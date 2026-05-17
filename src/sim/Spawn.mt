@@ -50,6 +50,7 @@ class Spawn {
         u.attackDamage = 0.0;
         u.attackCooldown = 0.0;
         u.defense = GameConst::workerDefense();
+        u.sightRange = GameConst::workerSight();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -110,6 +111,7 @@ class Spawn {
         u.attackDamage = GameConst::gruntDamage();
         u.attackCooldown = GameConst::gruntCooldown();
         u.defense = GameConst::gruntDefense();
+        u.sightRange = GameConst::gruntSight();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -173,6 +175,7 @@ class Spawn {
         u.attackDamage = GameConst::gruntDamage();
         u.attackCooldown = GameConst::gruntCooldown();
         u.defense = GameConst::gruntDefense();
+        u.sightRange = GameConst::gruntSight();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -214,6 +217,7 @@ class Spawn {
         bldg.hp = GameConst::commandCenterHp();
         bldg.maxHp = GameConst::commandCenterHp();
         bldg.defense = GameConst::commandCenterDefense();
+        bldg.sightRange = GameConst::commandCenterSight();
         bldg.producing = 0;
         bldg.buildLeft = 0.0;
         bldg.queueLen = 0;
@@ -385,6 +389,7 @@ class Spawn {
         bldg.hp = 1.0;
         bldg.maxHp = maxHp;
         bldg.defense = 0.0;
+        bldg.sightRange = 0.0;
         bldg.producing = 0;
         bldg.buildLeft = 0.0;
         bldg.queueLen = 0;
@@ -432,16 +437,19 @@ class Spawn {
         float halfH = GameConst::barracksHalfH();
         float hp    = GameConst::barracksHp();
         float def   = GameConst::barracksDefense();
+        float sight = GameConst::barracksSight();
         if (c.buildingKind == BuildingKind::refinery()) {
             halfW = GameConst::refineryHalfW();
             halfH = GameConst::refineryHalfH();
             hp    = GameConst::refineryHp();
             def   = GameConst::refineryDefense();
+            sight = GameConst::refinerySight();
         } else if (c.buildingKind == BuildingKind::commandCenter()) {
             halfW = GameConst::commandCenterHalfW();
             halfH = GameConst::commandCenterHalfH();
             hp    = GameConst::commandCenterHp();
             def   = GameConst::commandCenterDefense();
+            sight = GameConst::commandCenterSight();
         }
 
         BodyDef bd = new BodyDef();
@@ -462,6 +470,7 @@ class Spawn {
         bldg.hp = hp;
         bldg.maxHp = hp;
         bldg.defense = def;
+        bldg.sightRange = sight;
         reg.emplace(ghostE, "Building", bldg);
 
         Selectable sel = new Selectable();

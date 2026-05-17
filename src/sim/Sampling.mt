@@ -8,6 +8,7 @@ import * from "@mtype-box2d/Body.mt";
 import * from "../game/Constants.mt";
 import * from "../render/Snapshots.mt";
 import * from "./Schema.mt";
+import * from "./Fog.mt";
 
 class Sampling {
     public static function refresh(Registry reg, WorldSnapshot snap): void {
@@ -15,6 +16,18 @@ class Sampling {
         Sampling::collectBuildings(reg, snap);
         Sampling::collectResources(reg, snap);
         Sampling::collectSelected(reg, snap);
+        Sampling::collectFog(snap);
+    }
+
+    public static function collectFog(WorldSnapshot snap): void {
+        int n = GameConst::gridSize() * GameConst::gridSize();
+        int i = 0;
+        while (i < n) {
+            int s = Fog::state[i];
+            snap.fogState[i]  = s;
+            snap.fogStateF[i] = (float)s;
+            i = i + 1;
+        }
     }
 
     public static function collectUnits(Registry reg, WorldSnapshot snap): void {

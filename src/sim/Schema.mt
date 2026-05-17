@@ -24,6 +24,7 @@ class Unit {
     public float attackDamage;
     public float attackCooldown;
     public float defense;
+    public float sightRange;
     public float cooldownLeft;
 }
 
@@ -48,6 +49,7 @@ class Building {
     public float hp;
     public float maxHp;
     public float defense;
+    public float sightRange;
     public int   producing;
     public float buildLeft;
     public int   queueLen;
@@ -97,13 +99,13 @@ class Schema {
         reg.registerComponent("PhysicsBody", "PhysicsBody", f1, t1);
 
         string[] fU = ["kind","faction","hp","maxHp","radius","speed",
-                       "attackRange","attackDamage","attackCooldown","defense","cooldownLeft"];
+                       "attackRange","attackDamage","attackCooldown","defense","sightRange","cooldownLeft"];
         int[]    tU = [Entts::fieldInt(), Entts::fieldInt(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
-                       Entts::fieldFloat()];
+                       Entts::fieldFloat(), Entts::fieldFloat()];
         reg.registerComponent("Unit", "Unit", fU, tU);
 
         string[] fS = ["radius"];
@@ -119,11 +121,11 @@ class Schema {
         int[]    tA = [Entts::fieldInt()];
         reg.registerComponent("AttackOrder", "AttackOrder", fA, tA);
 
-        string[] fB = ["kind","faction","hp","maxHp","defense","producing","buildLeft",
+        string[] fB = ["kind","faction","hp","maxHp","defense","sightRange","producing","buildLeft",
                        "queueLen","rallyX","rallyY"];
         int[]    tB = [Entts::fieldInt(),   Entts::fieldInt(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
-                       Entts::fieldFloat(),
+                       Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldInt(),   Entts::fieldFloat(),
                        Entts::fieldInt(),   Entts::fieldFloat(), Entts::fieldFloat()];
         reg.registerComponent("Building", "Building", fB, tB);

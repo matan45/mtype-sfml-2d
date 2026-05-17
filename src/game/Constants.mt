@@ -55,6 +55,7 @@ class GameConst {
     public static function workerSpeed():        float { return 4.0; }
     public static function workerHp():           float { return 30.0; }
     public static function workerDefense():      float { return 0.0; }
+    public static function workerSight():        float { return 6.0; }
     public static function workerGatherAmount(): int   { return 5; }
     public static function workerGatherTime():   float { return 1.5; }
 
@@ -63,6 +64,7 @@ class GameConst {
     public static function gruntHp():         float { return 40.0; }
     public static function gruntDamage():     float { return 8.0; }
     public static function gruntDefense():    float { return 2.0; }
+    public static function gruntSight():      float { return 7.0; }
     public static function gruntRange():      float { return 1.2; }
     public static function gruntCooldown():   float { return 1.0; }
     public static function gruntSensorPad():  float { return 4.0; }
@@ -71,6 +73,7 @@ class GameConst {
     public static function commandCenterHalfH():   float { return 2.0; }
     public static function commandCenterHp():      float { return 500.0; }
     public static function commandCenterDefense(): float { return 6.0; }
+    public static function commandCenterSight():   float { return 10.0; }
     public static function commandCenterRallyDx(): float { return 0.0; }
     public static function commandCenterRallyDy(): float { return 3.0; }
 
@@ -78,6 +81,7 @@ class GameConst {
     public static function barracksHalfH():     float { return 2.0; }
     public static function barracksHp():        float { return 400.0; }
     public static function barracksDefense():   float { return 5.0; }
+    public static function barracksSight():     float { return 8.0; }
     public static function barracksRallyDy():   float { return 2.5; }
     public static function barracksCost():      int   { return 150; }
     public static function barracksBuildTime(): float { return 12.0; }
@@ -86,6 +90,7 @@ class GameConst {
     public static function refineryHalfH():     float { return 1.5; }
     public static function refineryHp():        float { return 300.0; }
     public static function refineryDefense():   float { return 4.0; }
+    public static function refinerySight():     float { return 5.0; }
     public static function refineryCost():      int   { return 75; }
     public static function refineryBuildTime(): float { return 8.0; }
     public static function refinerySnapRadius(): float { return 1.5; }

@@ -18,6 +18,7 @@ import * from "../input/Input.mt";
 import * from "../input/Selection.mt";
 import * from "../sim/Placement.mt";
 import * from "./Snapshots.mt";
+import * from "./FogShader.mt";
 
 // Pool of shape primitives reused across the frame. Created once on
 // startup by Render::init and never destroyed until shutdown.
@@ -78,6 +79,22 @@ class Render {
         return Render::pool;
     }
 
+    // Returns the fog state of the cell containing (wx, wy): 0/1/2. Anything
+    // out of bounds returns 0 (unexplored). Inlined here so Render.mt
+    // doesn't have to import Pathing (which transitively pulls EnTT's `View`).
+    public static function fogAt(WorldSnapshot snap, float wx, float wy): int {
+        int gs = GameConst::gridSize();
+        float h = GameConst::worldHalf();
+        int cx = (int)(wx + h);
+        int cy = (int)(wy + h);
+        if (cx < 0)   { return 0; }
+        if (cy < 0)   { return 0; }
+        if (cx >= gs) { return 0; }
+        if (cy >= gs) { return 0; }
+        return snap.fogState[cy * gs + cx];
+    }
+
+
     public static function world(RenderWindow win, View view, CameraState cam,
                                    WorldSnapshot snap, World physics,
                                    InputState in, SelectionState sel,
@@ -96,6 +113,12 @@ class Render {
             int   gh = snap.buildingIsGhost[i];
             float hw = snap.buildingHw[i];
             float hh = snap.buildingHh[i];
+
+            // Enemy buildings only render when their footprint center is in a
+            // currently-visible cell. Player buildings always render.
+            if (fc != Faction::player()) {
+                if (Render::fogAt(snap, bx, by) != 2) { i = i + 1; continue; }
+            }
             RectangleShape r = p.buildingRect;
             r.setSize(hw * 2.0, hh * 2.0);
             r.setOrigin(hw, hh);
@@ -186,6 +209,8 @@ class Render {
             int   rk = snap.resourceKind[i];
             float hw = snap.resourceHw[i];
             float hh = snap.resourceHh[i];
+            // Hide resources in never-seen cells; show them once explored.
+            if (Render::fogAt(snap, rx, ry) == 0) { i = i + 1; continue; }
             RectangleShape r = p.resourceRect;
             r.setSize(hw * 2.0, hh * 2.0);
             r.setOrigin(hw, hh);
@@ -209,6 +234,11 @@ class Render {
             float uy = snap.unitY[i];
             int   fc = snap.unitFaction[i];
             float rd = snap.unitRadius[i];
+
+            // Enemy units hidden when not in a currently-visible cell.
+            if (fc != Faction::player()) {
+                if (Render::fogAt(snap, ux, uy) != 2) { i = i + 1; continue; }
+            }
 
             CircleShape c = p.unitCircle;
             c.setRadius(rd);
@@ -242,8 +272,15 @@ class Render {
         }
 
         // Always-visible HP bars over units. Faction-colored.
+        // Skips enemy units hidden by fog (same gate as the unit body).
         i = 0;
         while (i < nu) {
+            float ux = snap.unitX[i];
+            float uy = snap.unitY[i];
+            int   fc = snap.unitFaction[i];
+            if (fc != Faction::player()) {
+                if (Render::fogAt(snap, ux, uy) != 2) { i = i + 1; continue; }
+            }
             float hp = snap.unitHp[i];
             float mx = snap.unitMaxHp[i];
             float frac = 1.0;
@@ -252,9 +289,6 @@ class Render {
                 if (frac < 0.0) { frac = 0.0; }
                 if (frac > 1.0) { frac = 1.0; }
             }
-            float ux = snap.unitX[i];
-            float uy = snap.unitY[i];
-            int   fc = snap.unitFaction[i];
             float rd = snap.unitRadius[i];
             float bw = 1.0;
             float bh = 0.15;
@@ -342,6 +376,11 @@ class Render {
             r.setOutlineThickness(0.08);
             Draw::rect(win, r);
         }
+
+        // Fog of war overlay via fragment shader. Two FFI calls per frame
+        // (uniform upload + one sprite draw) instead of thousands of
+        // setVertex calls.
+        FogShader::drawWorld(win, snap);
 
         Camera::resetView(win);
 

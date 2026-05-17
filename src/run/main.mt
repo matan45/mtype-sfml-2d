@@ -21,6 +21,7 @@ import * from "../render/CameraCtrl.mt";
 import * from "../render/Snapshots.mt";
 import * from "../render/Render.mt";
 import * from "../render/Hud.mt";
+import * from "../render/Minimap.mt";
 
 import * from "../sim/Schema.mt";
 import * from "../sim/Spawn.mt";
@@ -34,6 +35,7 @@ import * from "../sim/Production.mt";
 import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
 import * from "../sim/Commands.mt";
+import * from "../sim/Fog.mt";
 
 @EntryPoint
 class App {
@@ -73,6 +75,7 @@ class App {
         while (win.isOpen()) {
             Input::pump(win, in);
             if (in.quitRequested) { win.close(); }
+            Minimap::handleClick(win, in, cam);
             Placement::update(reg, world, win, cam, in, pls);
             Selection::update(reg, world, win, cam, in, sel);
             Commands::apply(reg, world, win, cam, in);
@@ -94,6 +97,7 @@ class App {
                 Events::drain(world);
                 Production::run(reg, world, fixedDt);
                 Cleanup::run(reg, world);
+                Fog::update(reg);
                 acc = acc - fixedDt;
             }
 
@@ -163,6 +167,7 @@ class App {
 
             win.clear(28, 32, 38, 255);
             Render::world(win, view, cam, snap, world, in, sel, pls);
+            Minimap::draw(win, cam, snap);
             ImGui::render(win);
             win.display();
         }

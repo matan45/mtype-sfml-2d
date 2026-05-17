@@ -42,6 +42,12 @@ class WorldSnapshot {
     public float[] selectedY;
     public float[] selectedRadius;
 
+    // Fog of war: gs*gs ints, mirrored from Fog::state. 0=unexplored,
+    // 1=explored, 2=visible. gs is the world grid size from GameConst.
+    public int[]   fogState;
+    // Same data as float[] for direct upload as a shader uniform array.
+    public float[] fogStateF;
+
     public constructor() {
         int cap = 256;
         this.unitCount = 0;
@@ -80,5 +86,8 @@ class WorldSnapshot {
         this.selectedX      = new float[cap];
         this.selectedY      = new float[cap];
         this.selectedRadius = new float[cap];
+
+        this.fogState  = new int[4096];
+        this.fogStateF = new float[4096];
     }
 }
