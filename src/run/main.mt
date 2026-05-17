@@ -121,13 +121,28 @@ class App {
             }
             int selectedWorkerCount = App::countSelectedWorkers(reg);
 
+            int selUnitE = App::singleSelectedUnit(reg);
+            float selUnitHp    = 0.0;
+            float selUnitMaxHp = 0.0;
+            float selUnitAtk   = 0.0;
+            float selUnitDef   = 0.0;
+            if (selUnitE != 0) {
+                Unit u = (Unit) reg.get(selUnitE, "Unit");
+                selUnitHp    = u.hp;
+                selUnitMaxHp = u.maxHp;
+                selUnitAtk   = u.attackDamage;
+                selUnitDef   = u.defense;
+            }
+
             int minerals = reg.ctxGetInt("minerals");
             int gas      = reg.ctxGetInt("gas");
             HudResult hr = Hud::draw(minerals, gas, fpsAvg,
                                        snap.selectedCount, selectedWorkerCount,
                                        selBase, baseQueueLen, baseBuildLeft,
                                        selBarracks, barracksQueueLen, barracksBuildLeft,
-                                       in.debugDraw);
+                                       in.debugDraw,
+                                       selUnitE, selUnitHp, selUnitMaxHp,
+                                       selUnitAtk, selUnitDef);
             in.debugDraw = hr.newDebugDraw;
             in.imguiHovered = hr.hovered;
             if (hr.trainWorkerClicked && selBase != 0) {
@@ -204,5 +219,23 @@ class App {
         while (e != 0) { n = n + 1; e = v.next(); }
         v.destroy();
         return n;
+    }
+
+    // The Selected unit-bearing entity when exactly one is selected. Returns
+    // 0 otherwise. Used by the HUD Selection panel to show HP/ATK/DEF.
+    public static function singleSelectedUnit(Registry reg): int {
+        string[] need = ["Selected", "Unit"];
+        EnttView v = reg.view(need);
+        int found = 0;
+        int n = 0;
+        int e = v.next();
+        while (e != 0) {
+            found = e;
+            n = n + 1;
+            e = v.next();
+        }
+        v.destroy();
+        if (n == 1) { return found; }
+        return 0;
     }
 }

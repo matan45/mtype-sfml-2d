@@ -141,33 +141,38 @@ class Render {
                 front.setOutlineThickness(0.0);
                 Draw::rect(win, front);
             } else {
-                // Damaged building: HP bar above.
+                // Always-visible HP bar above building. Faction-colored.
                 float bhp  = snap.buildingHp[i];
                 float bmhp = snap.buildingMaxHp[i];
-                if (bhp < bmhp && bmhp > 0.0001) {
-                    float frac = bhp / bmhp;
+                float frac = 1.0;
+                if (bmhp > 0.0001) {
+                    frac = bhp / bmhp;
                     if (frac < 0.0) { frac = 0.0; }
                     if (frac > 1.0) { frac = 1.0; }
-                    float bw = hw * 1.6;
-                    float bh = 0.18;
-                    float pbx = bx - bw * 0.5;
-                    float pby = by - hh - 0.5;
-                    RectangleShape back = p.hpBack;
-                    back.setSize(bw, bh);
-                    back.setOrigin(0.0, 0.0);
-                    back.setPosition(pbx, pby);
-                    back.setFillColor(60, 20, 20, 230);
-                    back.setOutlineThickness(0.0);
-                    Draw::rect(win, back);
-
-                    RectangleShape front = p.hpFront;
-                    front.setSize(bw * frac, bh);
-                    front.setOrigin(0.0, 0.0);
-                    front.setPosition(pbx, pby);
-                    front.setFillColor(80, 220, 100, 230);
-                    front.setOutlineThickness(0.0);
-                    Draw::rect(win, front);
                 }
+                float bw = hw * 1.6;
+                float bh = 0.18;
+                float pbx = bx - bw * 0.5;
+                float pby = by - hh - 0.5;
+                RectangleShape back = p.hpBack;
+                back.setSize(bw, bh);
+                back.setOrigin(0.0, 0.0);
+                back.setPosition(pbx, pby);
+                back.setFillColor(60, 20, 20, 230);
+                back.setOutlineThickness(0.0);
+                Draw::rect(win, back);
+
+                RectangleShape front = p.hpFront;
+                front.setSize(bw * frac, bh);
+                front.setOrigin(0.0, 0.0);
+                front.setPosition(pbx, pby);
+                if (fc == Faction::player()) {
+                    front.setFillColor(80, 220, 100, 230);
+                } else {
+                    front.setFillColor(220, 80, 80, 230);
+                }
+                front.setOutlineThickness(0.0);
+                Draw::rect(win, front);
             }
             i = i + 1;
         }
@@ -236,38 +241,44 @@ class Render {
             i = i + 1;
         }
 
-        // HP bars over units with hp < maxHp.
+        // Always-visible HP bars over units. Faction-colored.
         i = 0;
         while (i < nu) {
             float hp = snap.unitHp[i];
             float mx = snap.unitMaxHp[i];
-            if (hp < mx) {
-                float ux = snap.unitX[i];
-                float uy = snap.unitY[i];
-                float rd = snap.unitRadius[i];
-                float bw = 1.0;
-                float bh = 0.15;
-                float bx = ux - bw * 0.5;
-                float by = uy - rd - 0.5;
-                RectangleShape back = p.hpBack;
-                back.setSize(bw, bh);
-                back.setOrigin(0.0, 0.0);
-                back.setPosition(bx, by);
-                back.setFillColor(60, 20, 20, 230);
-                back.setOutlineThickness(0.0);
-                Draw::rect(win, back);
-
-                RectangleShape front = p.hpFront;
-                float frac = hp / mx;
+            float frac = 1.0;
+            if (mx > 0.0001) {
+                frac = hp / mx;
                 if (frac < 0.0) { frac = 0.0; }
                 if (frac > 1.0) { frac = 1.0; }
-                front.setSize(bw * frac, bh);
-                front.setOrigin(0.0, 0.0);
-                front.setPosition(bx, by);
-                front.setFillColor(80, 220, 100, 230);
-                front.setOutlineThickness(0.0);
-                Draw::rect(win, front);
             }
+            float ux = snap.unitX[i];
+            float uy = snap.unitY[i];
+            int   fc = snap.unitFaction[i];
+            float rd = snap.unitRadius[i];
+            float bw = 1.0;
+            float bh = 0.15;
+            float bx = ux - bw * 0.5;
+            float by = uy - rd - 0.5;
+            RectangleShape back = p.hpBack;
+            back.setSize(bw, bh);
+            back.setOrigin(0.0, 0.0);
+            back.setPosition(bx, by);
+            back.setFillColor(60, 20, 20, 230);
+            back.setOutlineThickness(0.0);
+            Draw::rect(win, back);
+
+            RectangleShape front = p.hpFront;
+            front.setSize(bw * frac, bh);
+            front.setOrigin(0.0, 0.0);
+            front.setPosition(bx, by);
+            if (fc == Faction::player()) {
+                front.setFillColor(80, 220, 100, 230);
+            } else {
+                front.setFillColor(220, 80, 80, 230);
+            }
+            front.setOutlineThickness(0.0);
+            Draw::rect(win, front);
             i = i + 1;
         }
 

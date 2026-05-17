@@ -40,7 +40,10 @@ class Hud {
                                   int baseQueueLen, float baseBuildLeft,
                                   int selectedBarracksEntity,
                                   int barracksQueueLen, float barracksBuildLeft,
-                                  bool debugDraw): HudResult {
+                                  bool debugDraw,
+                                  int selectedUnitEntity,
+                                  float selUnitHp, float selUnitMaxHp,
+                                  float selUnitAtk, float selUnitDef): HudResult {
         HudResult r = new HudResult();
         r.newDebugDraw = debugDraw;
 
@@ -85,6 +88,12 @@ class Hud {
             if (ImGui::begin("Selection")) {
                 if (ImGui::isWindowHovered()) { r.hovered = true; }
                 ImGui::text("Selected: " + selectedCount);
+                if (selectedUnitEntity != 0) {
+                    ImGui::separator();
+                    ImGui::text("HP:  " + Hud::fmt1(selUnitHp) + " / " + Hud::fmt1(selUnitMaxHp));
+                    ImGui::text("ATK: " + Hud::fmt1(selUnitAtk));
+                    ImGui::text("DEF: " + Hud::fmt1(selUnitDef));
+                }
                 if (selectedBaseEntity != 0) {
                     ImGui::separator();
                     ImGui::text("Command Center");

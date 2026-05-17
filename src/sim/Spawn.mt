@@ -49,6 +49,7 @@ class Spawn {
         u.attackRange = 0.0;
         u.attackDamage = 0.0;
         u.attackCooldown = 0.0;
+        u.defense = GameConst::workerDefense();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -108,6 +109,7 @@ class Spawn {
         u.attackRange = GameConst::gruntRange();
         u.attackDamage = GameConst::gruntDamage();
         u.attackCooldown = GameConst::gruntCooldown();
+        u.defense = GameConst::gruntDefense();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -170,6 +172,7 @@ class Spawn {
         u.attackRange = GameConst::gruntRange();
         u.attackDamage = GameConst::gruntDamage();
         u.attackCooldown = GameConst::gruntCooldown();
+        u.defense = GameConst::gruntDefense();
         u.cooldownLeft = 0.0;
         reg.emplace(e, "Unit", u);
 
@@ -210,6 +213,7 @@ class Spawn {
         bldg.faction = Faction::player();
         bldg.hp = GameConst::commandCenterHp();
         bldg.maxHp = GameConst::commandCenterHp();
+        bldg.defense = GameConst::commandCenterDefense();
         bldg.producing = 0;
         bldg.buildLeft = 0.0;
         bldg.queueLen = 0;
@@ -380,6 +384,7 @@ class Spawn {
         bldg.faction = Faction::player();
         bldg.hp = 1.0;
         bldg.maxHp = maxHp;
+        bldg.defense = 0.0;
         bldg.producing = 0;
         bldg.buildLeft = 0.0;
         bldg.queueLen = 0;
@@ -426,14 +431,17 @@ class Spawn {
         float halfW = GameConst::barracksHalfW();
         float halfH = GameConst::barracksHalfH();
         float hp    = GameConst::barracksHp();
+        float def   = GameConst::barracksDefense();
         if (c.buildingKind == BuildingKind::refinery()) {
             halfW = GameConst::refineryHalfW();
             halfH = GameConst::refineryHalfH();
             hp    = GameConst::refineryHp();
+            def   = GameConst::refineryDefense();
         } else if (c.buildingKind == BuildingKind::commandCenter()) {
             halfW = GameConst::commandCenterHalfW();
             halfH = GameConst::commandCenterHalfH();
             hp    = GameConst::commandCenterHp();
+            def   = GameConst::commandCenterDefense();
         }
 
         BodyDef bd = new BodyDef();
@@ -453,6 +461,7 @@ class Spawn {
 
         bldg.hp = hp;
         bldg.maxHp = hp;
+        bldg.defense = def;
         reg.emplace(ghostE, "Building", bldg);
 
         Selectable sel = new Selectable();

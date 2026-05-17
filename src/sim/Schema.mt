@@ -23,6 +23,7 @@ class Unit {
     public float attackRange;
     public float attackDamage;
     public float attackCooldown;
+    public float defense;
     public float cooldownLeft;
 }
 
@@ -46,6 +47,7 @@ class Building {
     public int   faction;
     public float hp;
     public float maxHp;
+    public float defense;
     public int   producing;
     public float buildLeft;
     public int   queueLen;
@@ -95,12 +97,13 @@ class Schema {
         reg.registerComponent("PhysicsBody", "PhysicsBody", f1, t1);
 
         string[] fU = ["kind","faction","hp","maxHp","radius","speed",
-                       "attackRange","attackDamage","attackCooldown","cooldownLeft"];
+                       "attackRange","attackDamage","attackCooldown","defense","cooldownLeft"];
         int[]    tU = [Entts::fieldInt(), Entts::fieldInt(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
-                       Entts::fieldFloat(), Entts::fieldFloat()];
+                       Entts::fieldFloat(), Entts::fieldFloat(),
+                       Entts::fieldFloat()];
         reg.registerComponent("Unit", "Unit", fU, tU);
 
         string[] fS = ["radius"];
@@ -116,10 +119,11 @@ class Schema {
         int[]    tA = [Entts::fieldInt()];
         reg.registerComponent("AttackOrder", "AttackOrder", fA, tA);
 
-        string[] fB = ["kind","faction","hp","maxHp","producing","buildLeft",
+        string[] fB = ["kind","faction","hp","maxHp","defense","producing","buildLeft",
                        "queueLen","rallyX","rallyY"];
         int[]    tB = [Entts::fieldInt(),   Entts::fieldInt(),
                        Entts::fieldFloat(), Entts::fieldFloat(),
+                       Entts::fieldFloat(),
                        Entts::fieldInt(),   Entts::fieldFloat(),
                        Entts::fieldInt(),   Entts::fieldFloat(), Entts::fieldFloat()];
         reg.registerComponent("Building", "Building", fB, tB);

@@ -34,6 +34,8 @@ class Sampling {
                 snap.unitFaction[n] = u.faction;
                 snap.unitHp[n]      = u.hp;
                 snap.unitMaxHp[n]   = u.maxHp;
+                snap.unitAttack[n]  = u.attackDamage;
+                snap.unitDefense[n] = u.defense;
                 n = n + 1;
             }
             e = v.next();
@@ -73,6 +75,7 @@ class Sampling {
                 snap.buildingKind[n] = b.kind;
                 snap.buildingHp[n] = b.hp;
                 snap.buildingMaxHp[n] = b.maxHp;
+                snap.buildingDefense[n] = b.defense;
                 if (reg.has(e, "Ghost")) {
                     snap.buildingIsGhost[n] = 1;
                     Construction c = (Construction) reg.get(e, "Construction");

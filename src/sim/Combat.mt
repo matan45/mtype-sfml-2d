@@ -99,7 +99,9 @@ class Combat {
             if (u.cooldownLeft <= 0.0) {
                 if (reg.has(target, "Building")) {
                     Building tbld = (Building) reg.get(target, "Building");
-                    tbld.hp = tbld.hp - u.attackDamage;
+                    float dmg = u.attackDamage - tbld.defense;
+                    if (dmg < 0.5) { dmg = 0.5; }
+                    tbld.hp = tbld.hp - dmg;
                     if (tbld.hp <= 0.0) {
                         tbld.hp = 0.0;
                         if (!reg.has(target, "Dead")) { reg.emplaceTag(target, "Dead"); }
@@ -107,7 +109,9 @@ class Combat {
                     reg.emplace(target, "Building", tbld);
                 } else if (reg.has(target, "Unit")) {
                     Unit tu = (Unit) reg.get(target, "Unit");
-                    tu.hp = tu.hp - u.attackDamage;
+                    float dmg = u.attackDamage - tu.defense;
+                    if (dmg < 0.5) { dmg = 0.5; }
+                    tu.hp = tu.hp - dmg;
                     if (tu.hp <= 0.0) {
                         tu.hp = 0.0;
                         if (!reg.has(target, "Dead")) { reg.emplaceTag(target, "Dead"); }

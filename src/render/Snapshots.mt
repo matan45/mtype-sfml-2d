@@ -11,6 +11,8 @@ class WorldSnapshot {
     public int[]   unitFaction;
     public float[] unitHp;
     public float[] unitMaxHp;
+    public float[] unitAttack;
+    public float[] unitDefense;
 
     // Buildings
     public int     buildingCount;
@@ -22,6 +24,7 @@ class WorldSnapshot {
     public int[]   buildingKind;
     public float[] buildingHp;
     public float[] buildingMaxHp;
+    public float[] buildingDefense;
     public int[]   buildingIsGhost;
     public float[] buildingProgress;
 
@@ -48,6 +51,8 @@ class WorldSnapshot {
         this.unitFaction  = new int[cap];
         this.unitHp       = new float[cap];
         this.unitMaxHp    = new float[cap];
+        this.unitAttack   = new float[cap];
+        this.unitDefense  = new float[cap];
 
         this.buildingCount     = 0;
         int bcap = 64;
@@ -59,6 +64,7 @@ class WorldSnapshot {
         this.buildingKind      = new int[bcap];
         this.buildingHp        = new float[bcap];
         this.buildingMaxHp     = new float[bcap];
+        this.buildingDefense   = new float[bcap];
         this.buildingIsGhost   = new int[bcap];
         this.buildingProgress  = new float[bcap];
 
