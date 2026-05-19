@@ -11,6 +11,8 @@ import * from "./Spawn.mt";
 
 class Production {
     public static function run(Registry reg, World world, float dt): void {
+        if (reg.ctxGetInt("lowPower") == 1) { return; }
+
         string[] need = ["Building"];
         EnttView v = reg.view(need);
         int e = v.next();
@@ -59,6 +61,7 @@ class Production {
         if (!reg.has(buildingEntity, "Building")) { return false; }
         if (reg.has(buildingEntity, "Ghost")) { return false; }
         Building b = (Building) reg.get(buildingEntity, "Building");
+        if (reg.ctxGetInt("lowPower") == 1) { return false; }
         int cost = Production::costFor(b.kind);
         int minerals = reg.ctxGetInt("minerals");
         if (minerals < cost) { return false; }

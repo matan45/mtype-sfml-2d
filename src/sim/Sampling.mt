@@ -77,6 +77,9 @@ class Sampling {
                 } else if (b.kind == BuildingKind::refinery()) {
                     hw = GameConst::refineryHalfW();
                     hh = GameConst::refineryHalfH();
+                } else if (b.kind == BuildingKind::powerPlant()) {
+                    hw = GameConst::powerPlantHalfW();
+                    hh = GameConst::powerPlantHalfH();
                 } else if (b.kind == BuildingKind::commandCenter()) {
                     hw = GameConst::commandCenterHalfW();
                     hh = GameConst::commandCenterHalfH();
@@ -155,6 +158,7 @@ class Sampling {
                 float hw = GameConst::commandCenterHalfW();
                 if (bld.kind == BuildingKind::barracks()) { hw = GameConst::barracksHalfW(); }
                 else if (bld.kind == BuildingKind::refinery()) { hw = GameConst::refineryHalfW(); }
+                else if (bld.kind == BuildingKind::powerPlant()) { hw = GameConst::powerPlantHalfW(); }
                 radius = hw + 0.1;
             }
             if (n < snap.selectedX.length) {

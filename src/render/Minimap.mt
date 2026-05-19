@@ -230,6 +230,7 @@ class Minimap {
             float bx = snap.buildingX[i];
             float by = snap.buildingY[i];
             int   fc = snap.buildingFaction[i];
+            int   bk = snap.buildingKind[i];
             int show = 1;
             if (fc != Faction:: player()) {
                 int cxb = (int)((bx + h) / tm);
@@ -244,7 +245,11 @@ class Minimap {
                 float mx = x0 + (bx + h) * pxPerM - 2.5;
                 float my = y0 + side - (by + h) * pxPerM - 2.5;
                 if (fc == Faction:: player()) {
-                    dot.setFillColor(80, 160, 240, 255);
+                    if (bk == BuildingKind::powerPlant()) {
+                        dot.setFillColor(230, 190, 80, 255);
+                    } else {
+                        dot.setFillColor(80, 160, 240, 255);
+                    }
                 } else {
                     dot.setFillColor(220, 80, 80, 255);
                 }
@@ -407,6 +412,7 @@ class Minimap {
             float bx = snap.buildingX[i];
             float by = snap.buildingY[i];
             int   fc = snap.buildingFaction[i];
+            int   bk = snap.buildingKind[i];
             int show = 1;
             if (fc != Faction:: player()) {
                 int cxb = (int)((bx + h) / tm);
@@ -421,7 +427,11 @@ class Minimap {
                 float mx = x0 + (bx + h) * pxPerM - 2.5;
                 float my = y0 + (by + h) * pxPerM - 2.5;
                 if (fc == Faction:: player()) {
-                    dot.setFillColor(80, 160, 240, 255);
+                    if (bk == BuildingKind::powerPlant()) {
+                        dot.setFillColor(230, 190, 80, 255);
+                    } else {
+                        dot.setFillColor(80, 160, 240, 255);
+                    }
                 } else {
                     dot.setFillColor(220, 80, 80, 255);
                 }

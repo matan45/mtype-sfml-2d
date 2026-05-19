@@ -32,6 +32,7 @@ import * from "../sim/Combat.mt";
 import * from "../sim/Construct.mt";
 import * from "../sim/Placement.mt";
 import * from "../sim/Production.mt";
+import * from "../sim/Power.mt";
 import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
 import * from "../sim/Commands.mt";
@@ -94,8 +95,10 @@ class App {
                 Steering::run(reg, fixedDt);
                 world.step(fixedDt, subSteps);
                 Events::drain(world);
+                Power::refresh(reg);
                 Production::run(reg, world, fixedDt);
                 Cleanup::run(reg, world);
+                Power::refresh(reg);
                 Fog::update(reg);
                 acc = acc - fixedDt;
             }
@@ -103,6 +106,7 @@ class App {
             CameraCtrl::update(cam, in, frame);
             CameraCtrl::apply(view, cam);
             Sampling::refresh(reg, snap);
+            Power::refresh(reg);
 
             ImGui::update(win, frame * 1000.0);
 
@@ -122,6 +126,7 @@ class App {
                 barracksQueueLen  = b.queueLen;
                 barracksBuildLeft = b.buildLeft;
             }
+            int selPowerPlant = App::selectedPowerPlant(reg);
             int selectedWorkerCount = App::countSelectedWorkers(reg);
             int selectedPlayerUnitCount = App::countSelectedPlayerUnits(reg);
             int selectedCombatCount = App::countSelectedCombatUnits(reg);
@@ -141,12 +146,17 @@ class App {
 
             int minerals = reg.ctxGetInt("minerals");
             int gas      = reg.ctxGetInt("gas");
+            int powerUsed = reg.ctxGetInt("powerUsed");
+            int powerCap  = reg.ctxGetInt("powerCap");
+            bool lowPower = reg.ctxGetInt("lowPower") == 1;
             HudResult hr = Hud::draw(win, cam, snap,
                                        minerals, gas, fpsAvg,
+                                       powerUsed, powerCap, lowPower,
                                        snap.selectedCount, selectedWorkerCount,
                                        selectedPlayerUnitCount, selectedCombatCount,
                                        selBase, baseQueueLen, baseBuildLeft,
                                        selBarracks, barracksQueueLen, barracksBuildLeft,
+                                       selPowerPlant,
                                        in.debugDraw,
                                        in.commandMode,
                                        selUnitE, selUnitHp, selUnitMaxHp,
@@ -174,6 +184,9 @@ class App {
             }
             if (hr.placeCommandCenterClicked && !pls.active) {
                 pls.start(BuildingKind::commandCenter());
+            }
+            if (hr.placePowerPlantClicked && !pls.active) {
+                pls.start(BuildingKind::powerPlant());
             }
 
             win.clear(28, 32, 38, 255);
@@ -213,6 +226,19 @@ class App {
     // the Train Grunt panel.
     public static function selectedBarracks(Registry reg): int {
         string[] need = ["Selected", "Building", "Barracks"];
+        EnttView v = reg.view(need);
+        int found = 0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) { found = e; }
+            e = v.next();
+        }
+        v.destroy();
+        return found;
+    }
+
+    public static function selectedPowerPlant(Registry reg): int {
+        string[] need = ["Selected", "Building", "PowerPlant"];
         EnttView v = reg.view(need);
         int found = 0;
         int e = v.next();

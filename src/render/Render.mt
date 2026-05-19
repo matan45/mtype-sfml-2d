@@ -129,6 +129,8 @@ class Render {
                 rC = 130; gC = 120; bC = 60;
             } else if (bk == BuildingKind::refinery()) {
                 rC = 60; gC = 170; bC = 160;
+            } else if (bk == BuildingKind::powerPlant()) {
+                rC = 180; gC = 160; bC = 70;
             }
             if (fc != Faction::player()) {
                 rC = 200; gC = 90; bC = 80;
@@ -362,6 +364,9 @@ class Render {
             } else if (pls.kind == BuildingKind::commandCenter()) {
                 hw = GameConst::commandCenterHalfW();
                 hh = GameConst::commandCenterHalfH();
+            } else if (pls.kind == BuildingKind::powerPlant()) {
+                hw = GameConst::powerPlantHalfW();
+                hh = GameConst::powerPlantHalfH();
             }
             RectangleShape r = p.buildingRect;
             r.setSize(hw * 2.0, hh * 2.0);

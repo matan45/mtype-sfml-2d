@@ -178,6 +178,7 @@ class Schema {
         reg.registerTag("Barracks");
         reg.registerTag("RefineryTag");
         reg.registerTag("CommandCenterTag");
+        reg.registerTag("PowerPlant");
         reg.registerTag("GasGeyser");
         reg.registerTag("Ghost");
         reg.registerTag("HasPath");
@@ -186,5 +187,8 @@ class Schema {
         // ---- ctx vars ----
         reg.ctxSetInt("minerals", GameConst::startingMinerals());
         reg.ctxSetInt("gas", 0);
+        reg.ctxSetInt("powerUsed", 0);
+        reg.ctxSetInt("powerCap", 0);
+        reg.ctxSetInt("lowPower", 0);
     }
 }

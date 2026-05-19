@@ -38,6 +38,7 @@ class BuildingKind {
     public static function barracks():      int { return 2; }
     public static function refinery():      int { return 3; }
     public static function commandCenter(): int { return 4; }
+    public static function powerPlant():    int { return 5; }
 }
 
 class ResourceKind {
@@ -95,6 +96,19 @@ class GameConst {
     public static function refineryBuildTime(): float { return 8.0; }
     public static function refinerySnapRadius(): float { return 1.5; }
 
+    public static function powerPlantHalfW():     float { return 1.5; }
+    public static function powerPlantHalfH():     float { return 1.5; }
+    public static function powerPlantHp():        float { return 250.0; }
+    public static function powerPlantDefense():   float { return 2.0; }
+    public static function powerPlantSight():     float { return 6.0; }
+    public static function powerPlantCost():      int   { return 100; }
+    public static function powerPlantBuildTime(): float { return 10.0; }
+    public static function powerPlantProvides():  int   { return 5; }
+
+    public static function commandCenterPowerUse(): int { return 3; }
+    public static function barracksPowerUse():      int { return 2; }
+    public static function refineryPowerUse():      int { return 1; }
+
     // Command Center = an additional Base. Built by workers near remote
     // resources so they have a closer drop-off building.
     public static function commandCenterCost():      int   { return 200; }
@@ -123,6 +137,7 @@ class GameConst {
     public static function buildingHalfExtent(int kind): float {
         if (kind == BuildingKind::barracks()) { return GameConst::barracksHalfW(); }
         if (kind == BuildingKind::refinery()) { return GameConst::refineryHalfW(); }
+        if (kind == BuildingKind::powerPlant()) { return GameConst::powerPlantHalfW(); }
         return GameConst::commandCenterHalfW();
     }
 

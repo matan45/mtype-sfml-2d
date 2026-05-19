@@ -90,6 +90,9 @@ class Placement {
             if (pls.kind == BuildingKind::commandCenter()) {
                 hw = GameConst::commandCenterHalfW();
                 hh = GameConst::commandCenterHalfH();
+            } else if (pls.kind == BuildingKind::powerPlant()) {
+                hw = GameConst::powerPlantHalfW();
+                hh = GameConst::powerPlantHalfH();
             }
             pls.snapX = wx;
             pls.snapY = wy;
@@ -107,6 +110,8 @@ class Placement {
                     ghostE = Spawn::barracksGhost(reg, world, pls.snapX, pls.snapY);
                 } else if (pls.kind == BuildingKind::commandCenter()) {
                     ghostE = Spawn::commandCenterGhost(reg, world, pls.snapX, pls.snapY);
+                } else if (pls.kind == BuildingKind::powerPlant()) {
+                    ghostE = Spawn::powerPlantGhost(reg, world, pls.snapX, pls.snapY);
                 } else {
                     ghostE = Spawn::refineryGhost(reg, world, pls.snapX, pls.snapY,
                                                     pls.targetGeyser);
@@ -128,6 +133,7 @@ class Placement {
         if (kind == BuildingKind::barracks())      { return GameConst::barracksCost(); }
         if (kind == BuildingKind::refinery())      { return GameConst::refineryCost(); }
         if (kind == BuildingKind::commandCenter()) { return GameConst::commandCenterCost(); }
+        if (kind == BuildingKind::powerPlant())    { return GameConst::powerPlantCost(); }
         return 0;
     }
 
@@ -243,6 +249,7 @@ class Placement {
         // and commits to building.
         if (reg.has(best, "Carrying"))     { reg.remove(best, "Carrying"); }
         if (reg.has(best, "AttackOrder"))  { reg.remove(best, "AttackOrder"); }
+        if (reg.has(best, "AttackMoveOrder")) { reg.remove(best, "AttackMoveOrder"); }
         if (reg.has(best, "Gathering"))    { reg.remove(best, "Gathering"); }
 
         ConstructOrder co = new ConstructOrder();

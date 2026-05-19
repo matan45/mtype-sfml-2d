@@ -18,6 +18,7 @@ class HudResult {
     public bool placeBarracksClicked;
     public bool placeRefineryClicked;
     public bool placeCommandCenterClicked;
+    public bool placePowerPlantClicked;
     public bool attackMoveClicked;
     public bool stopClicked;
     public bool newDebugDraw;
@@ -29,6 +30,7 @@ class HudResult {
         this.placeBarracksClicked      = false;
         this.placeRefineryClicked      = false;
         this.placeCommandCenterClicked = false;
+        this.placePowerPlantClicked    = false;
         this.attackMoveClicked         = false;
         this.stopClicked               = false;
         this.newDebugDraw              = false;
@@ -57,12 +59,14 @@ class Hud {
     public static function draw(RenderWindow win, CameraState cam,
                                   WorldSnapshot snap,
                                   int minerals, int gas, float fps,
+                                  int powerUsed, int powerCap, bool lowPower,
                                   int selectedCount, int selectedWorkerCount,
                                   int selectedPlayerUnitCount, int selectedCombatCount,
                                   int selectedBaseEntity,
                                   int baseQueueLen, float baseBuildLeft,
                                   int selectedBarracksEntity,
                                   int barracksQueueLen, float barracksBuildLeft,
+                                  int selectedPowerPlantEntity,
                                   bool debugDraw,
                                   int commandMode,
                                   int selectedUnitEntity,
@@ -93,16 +97,18 @@ class Hud {
         if (ImGui::beginFixed("##CommandHud")) {
             if (ImGui::isWindowHovered()) { r.hovered = true; }
 
-            Hud::drawResourceStrip(minerals, gas, fps, r);
+            Hud::drawResourceStrip(minerals, gas, powerUsed, powerCap, lowPower, fps, r);
             Hud::drawMinimap(miniTex, miniRect, hudY, cam, r);
             Hud::drawSelectionPanel(winW, hudH, miniRect,
                                     selectedCount, selectedBaseEntity,
                                     baseQueueLen, baseBuildLeft,
                                     selectedBarracksEntity,
                                     barracksQueueLen, barracksBuildLeft,
+                                    selectedPowerPlantEntity,
                                     selectedUnitEntity, selUnitHp,
                                     selUnitMaxHp, selUnitAtk, selUnitDef);
             Hud::drawCommandPanel(winW, hudH, minerals,
+                                  lowPower,
                                   selectedWorkerCount, selectedPlayerUnitCount, selectedCombatCount,
                                   selectedBaseEntity, selectedBarracksEntity,
                                   commandMode, r);
@@ -115,12 +121,20 @@ class Hud {
     }
 
     public static function drawResourceStrip(int minerals, int gas,
+                                              int powerUsed, int powerCap,
+                                              bool lowPower,
                                               float fps, HudResult r): void {
         ImGui::setCursorPos(14.0, 8.0);
         if (ImGui::beginChild("##resourceStrip", 0.0, 28.0, false)) {
             ImGui::textColored(0.58, 0.92, 0.98, 1.0, "MINERALS " + minerals);
             ImGui::sameLine();
             ImGui::textColored(0.58, 0.86, 0.50, 1.0, "GAS " + gas);
+            ImGui::sameLine();
+            if (lowPower) {
+                ImGui::textColored(0.95, 0.42, 0.32, 1.0, "POWER " + powerUsed + "/" + powerCap);
+            } else {
+                ImGui::textColored(0.92, 0.80, 0.38, 1.0, "POWER " + powerUsed + "/" + powerCap);
+            }
             ImGui::sameLine();
             ImGui::textColored(0.78, 0.82, 0.82, 1.0, "FPS " + ((int)fps));
             ImGui::sameLine();
@@ -155,6 +169,7 @@ class Hud {
                                                int selectedBarracksEntity,
                                                int barracksQueueLen,
                                                float barracksBuildLeft,
+                                               int selectedPowerPlantEntity,
                                                int selectedUnitEntity,
                                                float selUnitHp,
                                                float selUnitMaxHp,
@@ -202,11 +217,19 @@ class Hud {
                 ImGui::textColored(0.70, 0.82, 0.98, 1.0, "BARRACKS");
                 Hud::drawQueue(barracksQueueLen, barracksBuildLeft, GameConst::gruntBuildTime());
             }
+
+            if (selectedPowerPlantEntity != 0) {
+                ImGui::spacing();
+                ImGui::separator();
+                ImGui::textColored(0.70, 0.82, 0.98, 1.0, "POWER PLANT");
+                ImGui::text("Provides: " + GameConst::powerPlantProvides() + " power");
+            }
         }
         ImGui::endChild();
     }
 
     public static function drawCommandPanel(int winW, int hudH, int minerals,
+                                             bool lowPower,
                                              int selectedWorkerCount,
                                              int selectedPlayerUnitCount,
                                              int selectedCombatCount,
@@ -248,6 +271,9 @@ class Hud {
                 if (Hud::commandButton("Command Center", GameConst::commandCenterCost(), minerals)) {
                     r.placeCommandCenterClicked = true;
                 }
+                if (Hud::commandButton("Power Plant", GameConst::powerPlantCost(), minerals)) {
+                    r.placePowerPlantClicked = true;
+                }
                 if (Hud::commandButton("Barracks", GameConst::barracksCost(), minerals)) {
                     r.placeBarracksClicked = true;
                 }
@@ -260,7 +286,7 @@ class Hud {
                 any = 1;
                 ImGui::spacing();
                 ImGui::textColored(0.70, 0.82, 0.98, 1.0, "PRODUCTION");
-                if (Hud::commandButton("Train Worker", GameConst::workerCost(), minerals)) {
+                if (Hud::productionButton("Train Worker", GameConst::workerCost(), minerals, lowPower)) {
                     r.trainWorkerClicked = true;
                 }
             }
@@ -269,7 +295,7 @@ class Hud {
                 any = 1;
                 ImGui::spacing();
                 ImGui::textColored(0.70, 0.82, 0.98, 1.0, "PRODUCTION");
-                if (Hud::commandButton("Train Grunt", GameConst::gruntCost(), minerals)) {
+                if (Hud::productionButton("Train Grunt", GameConst::gruntCost(), minerals, lowPower)) {
                     r.trainGruntClicked = true;
                 }
             }
@@ -294,6 +320,20 @@ class Hud {
 
     public static function commandButton(string label, int cost, int minerals): bool {
         string full = label + " [" + cost + " min]";
+        if (minerals < cost) {
+            ImGui::textDisabled(full);
+            return false;
+        }
+        return ImGui::button(full);
+    }
+
+    public static function productionButton(string label, int cost,
+                                             int minerals, bool lowPower): bool {
+        string full = label + " [" + cost + " min]";
+        if (lowPower) {
+            ImGui::textDisabled(full + " - low power");
+            return false;
+        }
         if (minerals < cost) {
             ImGui::textDisabled(full);
             return false;
