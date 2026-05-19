@@ -44,8 +44,8 @@ class App {
         __plugin_load("mt_modules/@mtype-box2d/mt/mtype_b2d.dll");
         __plugin_load("mt_modules/@mtype-entt/mt/mtype_entt.dll");
         Audio::init();
-        int W = 1280;
-        int H = 720;
+        int W = 1920;
+        int H = 1080;
         RenderWindow win = Sfml::createWindow("RTS-MVP", W, H);
         win.setFramerateLimit(0);
         win.setVsync(true);
@@ -244,3 +244,5 @@ class App {
         return 0;
     }
 }
+
+

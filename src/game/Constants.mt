@@ -45,11 +45,11 @@ class ResourceKind {
     public static function gas():      int { return 2; }
 }
 
-// World is 64 m square centered on origin; tile grid is 1 m, so 64x64 cells.
+// World is 256 m square centered on origin; tile grid is 2 m, so 128x128 cells.
 class GameConst {
-    public static function gridSize():    int   { return 64; }
-    public static function tileMeters():  float { return 1.0; }
-    public static function worldHalf():   float { return 32.0; }
+    public static function gridSize():    int   { return 128; }
+    public static function tileMeters():  float { return 2.0; }
+    public static function worldHalf():   float { return 128.0; }
 
     public static function workerRadius():       float { return 0.4; }
     public static function workerSpeed():        float { return 4.0; }

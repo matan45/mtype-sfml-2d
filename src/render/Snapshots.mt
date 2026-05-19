@@ -42,11 +42,17 @@ class WorldSnapshot {
     public float[] selectedY;
     public float[] selectedRadius;
 
-    // Fog of war: gs*gs ints, mirrored from Fog::state. 0=unexplored,
-    // 1=explored, 2=visible. gs is the world grid size from GameConst.
-    public int[]   fogState;
-    // Same data as float[] for direct upload as a shader uniform array.
+    // Fog of war: gs*gs floats — references Fog::state (owned by the sim).
+    // Sampling::collectFog re-binds this to Fog::state every frame so the
+    // renderer can read/upload without dragging in Fog/EnTT imports. The
+    // initial allocation here is just a placeholder for the first frame.
     public float[] fogStateF;
+    // Indices of cells whose state changed since the renderer last drew.
+    // Owned by Fog; Sampling::collectFog hands us the reference + length
+    // and resets Fog's counter, so the next batch starts empty. The
+    // renderer drains [0..fogDirtyLen) by setPixel-ing only those cells.
+    public int[]   fogDirty;
+    public int     fogDirtyLen;
 
     public constructor() {
         int cap = 256;
@@ -87,7 +93,8 @@ class WorldSnapshot {
         this.selectedY      = new float[cap];
         this.selectedRadius = new float[cap];
 
-        this.fogState  = new int[4096];
-        this.fogStateF = new float[4096];
+        this.fogStateF   = new float[16384];
+        this.fogDirty    = new int[1];
+        this.fogDirtyLen = 0;
     }
 }

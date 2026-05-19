@@ -125,11 +125,16 @@ class Minimap {
         float world = h * 2.0;
         float pxPerM = side / world;
 
-        // Fog overlay — 4x4 cell grouping; supercell state = max of children.
-        // 16x16 supercells = at most 256 rects per frame.
+        // Fog overlay — fixed 16x16 supercell grid (256 rects max per frame);
+        // each supercell summarises cpsc*cpsc world cells. Supercell state =
+        // max over a stride-sampled subset of children (4x4 samples max), so
+        // the inner read count stays at ~4096/frame regardless of grid size.
         int gs = GameConst:: gridSize();
-        int sg = gs / 4;
-        float spx = pxPerM * 4.0;
+        int sg = 16;
+        int cpsc = gs / sg;
+        int stride = cpsc / 4;
+        if (stride < 1) { stride = 1; }
+        float spx = side / (float)sg;
         RectangleShape fogCell = p.dot;
         fogCell.setOrigin(0.0, 0.0);
         fogCell.setOutlineThickness(0.0);
@@ -138,18 +143,18 @@ class Minimap {
         while (sy < sg) {
             int sx = 0;
             while (sx < sg) {
-                int cx = sx * 4;
-                int cy = sy * 4;
+                int cx = sx * cpsc;
+                int cy = sy * cpsc;
                 int st = 0;
                 int ay = 0;
-                while (ay < 4) {
+                while (ay < cpsc) {
                     int ax = 0;
-                    while (ax < 4) {
-                        int s = snap.fogState[(cy + ay) * gs + (cx + ax)];
+                    while (ax < cpsc) {
+                        int s = (int)snap.fogStateF[(cy + ay) * gs + (cx + ax)];
                         if (s > st) { st = s; }
-                        ax = ax + 1;
+                        ax = ax + stride;
                     }
-                    ay = ay + 1;
+                    ay = ay + stride;
                 }
                 if (st != 2) {
                     int a = 235;
@@ -169,17 +174,18 @@ class Minimap {
         dot.setOutlineThickness(0.0);
 
         // Resources (hidden in unexplored cells).
+        float tm = GameConst:: tileMeters();
         int nr = snap.resourceCount;
         int i = 0;
         while (i < nr) {
             float rx = snap.resourceX[i];
             float ry = snap.resourceY[i];
             int   rk = snap.resourceKind[i];
-            int cxr = (int)(rx + h);
-            int cyr = (int)(ry + h);
+            int cxr = (int)((rx + h) / tm);
+            int cyr = (int)((ry + h) / tm);
             int st = 0;
             if (cxr >= 0 && cyr >= 0 && cxr < gs && cyr < gs) {
-                st = snap.fogState[cyr * gs + cxr];
+                st = (int)snap.fogStateF[cyr * gs + cxr];
             }
             if (st != 0) {
                 float mx = x0 + (rx + h) * pxPerM - 1.0;
@@ -206,11 +212,11 @@ class Minimap {
             int   fc = snap.buildingFaction[i];
             int show = 1;
             if (fc != Faction:: player()) {
-                int cxb = (int)(bx + h);
-                int cyb = (int)(by + h);
+                int cxb = (int)((bx + h) / tm);
+                int cyb = (int)((by + h) / tm);
                 int st = 0;
                 if (cxb >= 0 && cyb >= 0 && cxb < gs && cyb < gs) {
-                    st = snap.fogState[cyb * gs + cxb];
+                    st = (int)snap.fogStateF[cyb * gs + cxb];
                 }
                 if (st != 2) { show = 0; }
             }
@@ -239,11 +245,11 @@ class Minimap {
             int   fc = snap.unitFaction[i];
             int show = 1;
             if (fc != Faction:: player()) {
-                int cxu = (int)(ux + h);
-                int cyu = (int)(uy + h);
+                int cxu = (int)((ux + h) / tm);
+                int cyu = (int)((uy + h) / tm);
                 int st = 0;
                 if (cxu >= 0 && cyu >= 0 && cxu < gs && cyu < gs) {
-                    st = snap.fogState[cyu * gs + cxu];
+                    st = (int)snap.fogStateF[cyu * gs + cxu];
                 }
                 if (st != 2) { show = 0; }
             }

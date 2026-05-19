@@ -1,9 +1,10 @@
-// 64x64 grid pathfinding with A* and line-of-sight waypoint smoothing.
+// 128x128 grid pathfinding with A* and line-of-sight waypoint smoothing.
 //
-// Cells are 1m × 1m. World x/y in [-32, 32) map to cell index (cx, cy)
-// where cx = floor(x + 32), cy = floor(y + 32). blocked[cy*64+cx] = 1
-// marks an obstacle. Only static obstacles (buildings, resource nodes)
-// are marked — units don't write the grid; Box2D handles unit-unit.
+// Cells are 2m × 2m. World x/y in [-128, 128) map to cell index (cx, cy)
+// where cx = floor((x + 128) / 2), cy = floor((y + 128) / 2).
+// blocked[cy*128+cx] = 1 marks an obstacle. Only static obstacles
+// (buildings, resource nodes) are marked — units don't write the grid;
+// Box2D handles unit-unit.
 //
 // Path data lives in a global ArrayList<PathEntry> side-map keyed by
 // entity id. < 200 simultaneous paths is the design budget; linear
@@ -29,23 +30,23 @@ class PathEntry {
 }
 
 class Pathing {
-    // 64*64 = 4096 cells.
-    public static int[] blocked = new int[4096];
+    // 128*128 = 16384 cells.
+    public static int[] blocked = new int[16384];
     public static int   inited  = 0;
 
     // A* working memory — reused across calls. The previous implementation
-    // allocated five 4096-int arrays per pathfind AND linearly scanned all
-    // 4096 cells every expansion to find min-fScore. Static buffers + an
-    // open-list dropped both costs by ~10x for typical RTS distances.
+    // allocated five per-pathfind arrays AND linearly scanned all cells
+    // every expansion to find min-fScore. Static buffers + an open-list
+    // dropped both costs by ~10x for typical RTS distances.
     public static int   astarInf       = 1000000000;
-    public static int[] aCameFrom      = new int[4096];
-    public static int[] aGScore        = new int[4096];
-    public static int[] aFScore        = new int[4096];
-    public static int[] aInOpen        = new int[4096];
-    public static int[] aClosed        = new int[4096];
-    public static int[] aTouched       = new int[4096];
+    public static int[] aCameFrom      = new int[16384];
+    public static int[] aGScore        = new int[16384];
+    public static int[] aFScore        = new int[16384];
+    public static int[] aInOpen        = new int[16384];
+    public static int[] aClosed        = new int[16384];
+    public static int[] aTouched       = new int[16384];
     public static int   aTouchedLen    = 0;
-    public static int[] aOpenList      = new int[4096];
+    public static int[] aOpenList      = new int[16384];
     public static int   aOpenListLen   = 0;
     public static int   aInited        = 0;
 
@@ -57,7 +58,7 @@ class Pathing {
 
     public static function ensureInit(): void {
         if (Pathing::inited == 1) { return; }
-        int n = 4096;
+        int n = 16384;
         int i = 0;
         while (i < n) { Pathing::blocked[i] = 0; i = i + 1; }
         Pathing::inited = 1;
@@ -72,16 +73,18 @@ class Pathing {
     }
 
     public static function toCellX(float x): int {
-        return (int)(x + GameConst::worldHalf());
+        return (int)((x + GameConst::worldHalf()) / GameConst::tileMeters());
     }
     public static function toCellY(float y): int {
-        return (int)(y + GameConst::worldHalf());
+        return (int)((y + GameConst::worldHalf()) / GameConst::tileMeters());
     }
     public static function fromCellX(int cx): float {
-        return (float)cx - GameConst::worldHalf() + 0.5;
+        float tm = GameConst::tileMeters();
+        return ((float)cx + 0.5) * tm - GameConst::worldHalf();
     }
     public static function fromCellY(int cy): float {
-        return (float)cy - GameConst::worldHalf() + 0.5;
+        float tm = GameConst::tileMeters();
+        return ((float)cy + 0.5) * tm - GameConst::worldHalf();
     }
 
     public static function isBlocked(int cx, int cy): bool {
@@ -225,7 +228,7 @@ class Pathing {
         int INF = Pathing::astarInf;
 
         // Reset only the cells touched by the previous astar call (or all
-        // cells on the very first use). Cuts init from O(4096) to O(open
+        // cells on the very first use). Cuts init from O(N*N) to O(open
         // frontier size) for typical paths.
         if (Pathing::aInited == 0) {
             int i = 0;
@@ -272,7 +275,7 @@ class Pathing {
         int iters = 0;
         while (Pathing::aOpenListLen > 0 && iters < total) {
             iters = iters + 1;
-            // Min-fScore over the open list only (not all 4096 cells).
+            // Min-fScore over the open list only (not all N*N cells).
             int bestPos = -1;
             int bestF = INF + 1;
             int j = 0;
@@ -346,9 +349,9 @@ class Pathing {
     public static function reconstruct(int[] cameFrom, int goal,
                                          int sCx, int sCy, int gCx, int gCy): float[] {
         int N = GameConst::gridSize();
-        // Worst case 4096 entries; we'll trim.
-        int[] rawX = new int[4096];
-        int[] rawY = new int[4096];
+        // Worst case N*N entries; we'll trim.
+        int[] rawX = new int[16384];
+        int[] rawY = new int[16384];
         int len = 0;
         int cur = goal;
         while (cur >= 0) {

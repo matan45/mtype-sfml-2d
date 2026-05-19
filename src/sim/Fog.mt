@@ -1,4 +1,4 @@
-// Fog of war over the 64x64 tile grid.
+// Fog of war over the 128x128 tile grid.
 //
 // State per cell:
 //   0 = unexplored (never seen — drawn fully black on top of world)
@@ -6,11 +6,18 @@
 //                    drawn dim/gray on top of world)
 //   2 = visible    (currently inside a PlayerControlled unit/building sight)
 //
-// Each tick: clear all visible cells back to explored, then walk every
-// PlayerControlled entity with sightRange > 0 and mark cells within the
-// disc as visible. Cells touched for the first time go straight from
+// Each tick: clear all currently-visible cells back to explored, then walk
+// every PlayerControlled entity with sightRange > 0 and mark cells within
+// the disc as visible. Cells touched for the first time go straight from
 // unexplored to visible (and decay to explored on the next tick they're
 // out of sight).
+//
+// Storage notes:
+//   - `state` is float[] (not int[]) so the renderer can hand the same
+//     buffer straight to the GLSL uniform-array upload — no per-frame
+//     int->float copy in Sampling::collectFog.
+//   - Decay walks a `visible` index list (cells flipped to 2 last tick)
+//     instead of scanning all 16384 cells.
 
 import * from "@mtype-entt/Entt.mt";
 import * from "@mtype-box2d/Body.mt";
@@ -20,15 +27,30 @@ import * from "./Schema.mt";
 import * from "./Pathing.mt";
 
 class Fog {
-    // 64*64 = 4096 cells.
-    public static int[] state  = new int[4096];
-    public static int   inited = 0;
+    // 128*128 = 16384 cells. Stored as float so the shader upload can
+    // reference the same buffer without an int->float copy.
+    public static float[] state  = new float[16384];
+    public static int     inited = 0;
+
+    // Indices of cells flipped to visible (2) during the current tick.
+    // Capped at the full grid size as a worst-case; in practice this
+    // list holds the sum of sight-disc areas (a few hundred cells).
+    public static int[] visible    = new int[16384];
+    public static int   visibleLen = 0;
+
+    // Indices of cells whose state changed since the renderer last
+    // drained this list (drained by Sampling::collectFog each frame).
+    // Lets the renderer setPixel only what changed instead of all 16384
+    // cells. Worst-case capped at the grid size.
+    public static int[] dirty    = new int[16384];
+    public static int   dirtyLen = 0;
 
     public static function ensureInit(): void {
         if (Fog::inited == 1) { return; }
-        int n = 4096;
+        int n = 16384;
         int i = 0;
-        while (i < n) { Fog::state[i] = 0; i = i + 1; }
+        while (i < n) { Fog::state[i] = 0.0; i = i + 1; }
+        Fog::visibleLen = 0;
         Fog::inited = 1;
     }
 
@@ -38,7 +60,7 @@ class Fog {
         int gs = GameConst::gridSize();
         if (cx >= gs) { return 0; }
         if (cy >= gs) { return 0; }
-        return Fog::state[cy * gs + cx];
+        return (int)Fog::state[cy * gs + cx];
     }
 
     // World-space helper: state at (x, y).
@@ -50,15 +72,22 @@ class Fog {
 
     public static function update(Registry reg): void {
         Fog::ensureInit();
-        int gs = GameConst::gridSize();
-        int n  = gs * gs;
 
-        // Decay: anything currently visible drops to explored.
+        // Decay: cells we flipped to visible last tick drop back to explored.
+        // No need to scan the whole grid — those cells are exactly the ones
+        // in the `visible` list. revealDisc below will repopulate it. Each
+        // decayed cell is also appended to `dirty` so the renderer can
+        // setPixel only what changed.
+        int vn = Fog::visibleLen;
         int i = 0;
-        while (i < n) {
-            if (Fog::state[i] == 2) { Fog::state[i] = 1; }
+        while (i < vn) {
+            int idx = Fog::visible[i];
+            Fog::state[idx] = 1.0;
+            Fog::dirty[Fog::dirtyLen] = idx;
+            Fog::dirtyLen = Fog::dirtyLen + 1;
             i = i + 1;
         }
+        Fog::visibleLen = 0;
 
         // Reveal: PlayerControlled units.
         string[] needU = ["Unit", "PhysicsBody", "PlayerControlled"];
@@ -95,7 +124,10 @@ class Fog {
     }
 
     // Mark every cell whose center is within `r` meters of (wx, wy) as
-    // visible. Uses square-of-distance to skip a sqrt per cell.
+    // visible. Appends each newly-flipped index to the `visible` list so
+    // next tick's decay can find it without a full grid scan. Skips cells
+    // already marked visible this tick (avoids duplicate entries when two
+    // entities' sight discs overlap).
     public static function revealDisc(float wx, float wy, float r): void {
         int gs = GameConst::gridSize();
         int cx0 = Pathing::toCellX(wx - r);
@@ -116,7 +148,14 @@ class Fog {
                 float dx = ccx - wx;
                 float dy = ccy - wy;
                 if (dx * dx + dy * dy <= r2) {
-                    Fog::state[cy * gs + cx] = 2;
+                    int idx = cy * gs + cx;
+                    if (Fog::state[idx] != 2.0) {
+                        Fog::state[idx] = 2.0;
+                        Fog::visible[Fog::visibleLen] = idx;
+                        Fog::visibleLen = Fog::visibleLen + 1;
+                        Fog::dirty[Fog::dirtyLen] = idx;
+                        Fog::dirtyLen = Fog::dirtyLen + 1;
+                    }
                 }
                 cx = cx + 1;
             }

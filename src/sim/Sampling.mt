@@ -20,14 +20,15 @@ class Sampling {
     }
 
     public static function collectFog(WorldSnapshot snap): void {
-        int n = GameConst::gridSize() * GameConst::gridSize();
-        int i = 0;
-        while (i < n) {
-            int s = Fog::state[i];
-            snap.fogState[i]  = s;
-            snap.fogStateF[i] = (float)s;
-            i = i + 1;
-        }
+        // Fog::state is already float[]; hand the renderer a reference to
+        // the live simulation buffer rather than copying it. No per-frame
+        // work; mutations to Fog::state are visible immediately.
+        snap.fogStateF = Fog::state;
+        // Hand over the dirty-cell list and reset Fog's counter so the
+        // next batch starts empty. The renderer drains [0..fogDirtyLen).
+        snap.fogDirty    = Fog::dirty;
+        snap.fogDirtyLen = Fog::dirtyLen;
+        Fog::dirtyLen    = 0;
     }
 
     public static function collectUnits(Registry reg, WorldSnapshot snap): void {

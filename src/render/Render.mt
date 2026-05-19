@@ -85,13 +85,14 @@ class Render {
     public static function fogAt(WorldSnapshot snap, float wx, float wy): int {
         int gs = GameConst::gridSize();
         float h = GameConst::worldHalf();
-        int cx = (int)(wx + h);
-        int cy = (int)(wy + h);
+        float tm = GameConst::tileMeters();
+        int cx = (int)((wx + h) / tm);
+        int cy = (int)((wy + h) / tm);
         if (cx < 0)   { return 0; }
         if (cy < 0)   { return 0; }
         if (cx >= gs) { return 0; }
         if (cy >= gs) { return 0; }
-        return snap.fogState[cy * gs + cx];
+        return (int)snap.fogStateF[cy * gs + cx];
     }
 
 
@@ -377,9 +378,9 @@ class Render {
             Draw::rect(win, r);
         }
 
-        // Fog of war overlay via fragment shader. Two FFI calls per frame
-        // (uniform upload + one sprite draw) instead of thousands of
-        // setVertex calls.
+        // Fog of war overlay — 16x16 supercell grid of Draw::rect calls
+        // (default-state primitives, ≤256 rects per frame). See the file
+        // comment in FogShader.mt for why we don't use a shader.
         FogShader::drawWorld(win, snap);
 
         Camera::resetView(win);
