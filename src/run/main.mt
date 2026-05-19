@@ -76,8 +76,8 @@ class App {
             Input::pump(win, in);
             if (in.quitRequested) { win.close(); }
             Placement::update(reg, world, win, cam, in, pls);
-            Selection::update(reg, world, win, cam, in, sel);
             Commands::apply(reg, world, win, cam, in);
+            Selection::update(reg, world, win, cam, in, sel);
 
             float frame = clk.restartSeconds();
             if (frame > maxFrame) { frame = maxFrame; }
@@ -123,6 +123,8 @@ class App {
                 barracksBuildLeft = b.buildLeft;
             }
             int selectedWorkerCount = App::countSelectedWorkers(reg);
+            int selectedPlayerUnitCount = App::countSelectedPlayerUnits(reg);
+            int selectedCombatCount = App::countSelectedCombatUnits(reg);
 
             int selUnitE = App::singleSelectedUnit(reg);
             float selUnitHp    = 0.0;
@@ -142,13 +144,22 @@ class App {
             HudResult hr = Hud::draw(win, cam, snap,
                                        minerals, gas, fpsAvg,
                                        snap.selectedCount, selectedWorkerCount,
+                                       selectedPlayerUnitCount, selectedCombatCount,
                                        selBase, baseQueueLen, baseBuildLeft,
                                        selBarracks, barracksQueueLen, barracksBuildLeft,
                                        in.debugDraw,
+                                       in.commandMode,
                                        selUnitE, selUnitHp, selUnitMaxHp,
                                        selUnitAtk, selUnitDef);
             in.debugDraw = hr.newDebugDraw;
             in.imguiHovered = hr.hovered;
+            if (hr.attackMoveClicked) {
+                in.commandMode = CommandMode::attackMove();
+            }
+            if (hr.stopClicked) {
+                Commands::stopSelected(reg);
+                in.commandMode = CommandMode::normal();
+            }
             if (hr.trainWorkerClicked && selBase != 0) {
                 Production::tryQueueUnit(reg, selBase);
             }
@@ -221,6 +232,30 @@ class App {
         int n = 0;
         int e = v.next();
         while (e != 0) { n = n + 1; e = v.next(); }
+        v.destroy();
+        return n;
+    }
+
+    public static function countSelectedPlayerUnits(Registry reg): int {
+        string[] need = ["Selected", "Unit", "PlayerControlled"];
+        EnttView v = reg.view(need);
+        int n = 0;
+        int e = v.next();
+        while (e != 0) { n = n + 1; e = v.next(); }
+        v.destroy();
+        return n;
+    }
+
+    public static function countSelectedCombatUnits(Registry reg): int {
+        string[] need = ["Selected", "Unit", "PlayerControlled"];
+        EnttView v = reg.view(need);
+        int n = 0;
+        int e = v.next();
+        while (e != 0) {
+            Unit u = (Unit) reg.get(e, "Unit");
+            if (u.attackDamage > 0.0) { n = n + 1; }
+            e = v.next();
+        }
         v.destroy();
         return n;
     }

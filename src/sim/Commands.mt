@@ -148,6 +148,27 @@ class Commands {
     public static function apply(Registry reg, World world,
                                    RenderWindow win, CameraState cam,
                                    InputState in): void {
+        if (in.stopPressed) {
+            Commands::stopSelected(reg);
+            return;
+        }
+
+        if (in.commandMode == CommandMode::attackMove()) {
+            if (in.rightClickEdge) {
+                in.commandMode = CommandMode::normal();
+            } else if (in.leftDownEdge) {
+                float[] aw = Selection::cursorWorld(win, cam, in);
+                Commands::issueAttackMove(reg, world, aw[0], aw[1]);
+                in.commandMode = CommandMode::normal();
+                in.leftDownEdge = false;
+                in.leftUpEdge = false;
+                in.leftHeld = false;
+                return;
+            } else {
+                return;
+            }
+        }
+
         if (!in.rightClickEdge) { return; }
         float[] cw = Selection::cursorWorld(win, cam, in);
         float wx = cw[0];
@@ -188,6 +209,7 @@ class Commands {
             // Clear any prior order before issuing a new one.
             if (reg.has(e, "Carrying"))        { reg.remove(e, "Carrying"); }
             if (reg.has(e, "AttackOrder"))     { reg.remove(e, "AttackOrder"); }
+            if (reg.has(e, "AttackMoveOrder")) { reg.remove(e, "AttackMoveOrder"); }
             if (reg.has(e, "ConstructOrder"))  { reg.remove(e, "ConstructOrder"); }
             if (reg.has(e, "Gathering"))       { reg.remove(e, "Gathering"); }
 
@@ -266,6 +288,54 @@ class Commands {
             }
             i = i + 1;
         }
+    }
+
+    public static function issueAttackMove(Registry reg, World world,
+                                            float tx, float ty): void {
+        int[] units = Commands::selectedUnits(reg);
+        int n = units.length;
+        int i = 0;
+        while (i < n) {
+            int e = units[i];
+            Unit u = (Unit) reg.get(e, "Unit");
+            if (u.attackDamage > 0.0 && reg.has(e, "PhysicsBody")) {
+                Commands::clearOrders(reg, e, false);
+                AttackMoveOrder amo = new AttackMoveOrder();
+                amo.tx = tx;
+                amo.ty = ty;
+                reg.emplace(e, "AttackMoveOrder", amo);
+                PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
+                Commands::setMove(reg, e, pb.bodyHandle, tx, ty, world);
+            }
+            i = i + 1;
+        }
+    }
+
+    public static function stopSelected(Registry reg): void {
+        int[] units = Commands::selectedUnits(reg);
+        int n = units.length;
+        int i = 0;
+        while (i < n) {
+            int e = units[i];
+            Commands::clearOrders(reg, e, true);
+            if (reg.has(e, "PhysicsBody")) {
+                PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
+                Body b = new Body(pb.bodyHandle);
+                b.setLinearVelocity(0.0, 0.0);
+            }
+            i = i + 1;
+        }
+    }
+
+    public static function clearOrders(Registry reg, int e, bool clearMove): void {
+        if (reg.has(e, "Carrying"))        { reg.remove(e, "Carrying"); }
+        if (reg.has(e, "AttackOrder"))     { reg.remove(e, "AttackOrder"); }
+        if (reg.has(e, "AttackMoveOrder")) { reg.remove(e, "AttackMoveOrder"); }
+        if (reg.has(e, "ConstructOrder"))  { reg.remove(e, "ConstructOrder"); }
+        if (reg.has(e, "Gathering"))       { reg.remove(e, "Gathering"); }
+        if (clearMove && reg.has(e, "MoveOrder")) { reg.remove(e, "MoveOrder"); }
+        if (clearMove && reg.has(e, "HasPath")) { reg.remove(e, "HasPath"); }
+        if (clearMove) { Pathing::clearPath(e); }
     }
 
     public static function bodyOf(Registry reg, int e): Body? {

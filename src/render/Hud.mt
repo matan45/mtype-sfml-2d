@@ -7,6 +7,7 @@ import * from "@mtype-sfml/Graphics.mt";
 import * from "@mtype-sfml/ImGui.mt";
 
 import * from "../game/Constants.mt";
+import * from "../input/Input.mt";
 import * from "./CameraCtrl.mt";
 import * from "./Snapshots.mt";
 import * from "./Minimap.mt";
@@ -17,6 +18,8 @@ class HudResult {
     public bool placeBarracksClicked;
     public bool placeRefineryClicked;
     public bool placeCommandCenterClicked;
+    public bool attackMoveClicked;
+    public bool stopClicked;
     public bool newDebugDraw;
     public bool hovered;
 
@@ -26,6 +29,8 @@ class HudResult {
         this.placeBarracksClicked      = false;
         this.placeRefineryClicked      = false;
         this.placeCommandCenterClicked = false;
+        this.attackMoveClicked         = false;
+        this.stopClicked               = false;
         this.newDebugDraw              = false;
         this.hovered                   = false;
     }
@@ -53,11 +58,13 @@ class Hud {
                                   WorldSnapshot snap,
                                   int minerals, int gas, float fps,
                                   int selectedCount, int selectedWorkerCount,
+                                  int selectedPlayerUnitCount, int selectedCombatCount,
                                   int selectedBaseEntity,
                                   int baseQueueLen, float baseBuildLeft,
                                   int selectedBarracksEntity,
                                   int barracksQueueLen, float barracksBuildLeft,
                                   bool debugDraw,
+                                  int commandMode,
                                   int selectedUnitEntity,
                                   float selUnitHp, float selUnitMaxHp,
                                   float selUnitAtk, float selUnitDef): HudResult {
@@ -96,8 +103,9 @@ class Hud {
                                     selectedUnitEntity, selUnitHp,
                                     selUnitMaxHp, selUnitAtk, selUnitDef);
             Hud::drawCommandPanel(winW, hudH, minerals,
-                                  selectedWorkerCount, selectedBaseEntity,
-                                  selectedBarracksEntity, r);
+                                  selectedWorkerCount, selectedPlayerUnitCount, selectedCombatCount,
+                                  selectedBaseEntity, selectedBarracksEntity,
+                                  commandMode, r);
         }
         ImGui::end();
         Hud::popTheme();
@@ -200,8 +208,11 @@ class Hud {
 
     public static function drawCommandPanel(int winW, int hudH, int minerals,
                                              int selectedWorkerCount,
+                                             int selectedPlayerUnitCount,
+                                             int selectedCombatCount,
                                              int selectedBaseEntity,
                                              int selectedBarracksEntity,
+                                             int commandMode,
                                              HudResult r): void {
         float pad = 14.0;
         float top = 42.0;
@@ -213,8 +224,24 @@ class Hud {
         if (ImGui::beginChild("##commandPane", w, h, true)) {
             ImGui::textColored(0.86, 0.88, 0.82, 1.0, "COMMANDS");
             ImGui::separator();
+            if (commandMode == CommandMode::attackMove()) {
+                ImGui::textColored(0.95, 0.78, 0.38, 1.0, "ATTACK MOVE: choose target");
+                ImGui::spacing();
+            }
 
             int any = 0;
+            if (selectedPlayerUnitCount > 0) {
+                any = 1;
+                ImGui::textColored(0.70, 0.82, 0.98, 1.0, "ORDERS");
+                if (selectedCombatCount > 0 && ImGui::button("Attack Move [Q]")) {
+                    r.attackMoveClicked = true;
+                }
+                if (ImGui::button("Stop [E]")) {
+                    r.stopClicked = true;
+                }
+                ImGui::spacing();
+            }
+
             if (selectedWorkerCount > 0) {
                 any = 1;
                 ImGui::textColored(0.70, 0.82, 0.98, 1.0, "BUILD");

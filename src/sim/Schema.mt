@@ -43,6 +43,11 @@ class AttackOrder {
     public int targetEntity;
 }
 
+class AttackMoveOrder {
+    public float tx;
+    public float ty;
+}
+
 class Building {
     public int   kind;
     public int   faction;
@@ -120,6 +125,10 @@ class Schema {
         string[] fA = ["targetEntity"];
         int[]    tA = [Entts::fieldInt()];
         reg.registerComponent("AttackOrder", "AttackOrder", fA, tA);
+
+        string[] fAM = ["tx","ty"];
+        int[]    tAM = [Entts::fieldFloat(), Entts::fieldFloat()];
+        reg.registerComponent("AttackMoveOrder", "AttackMoveOrder", fAM, tAM);
 
         string[] fB = ["kind","faction","hp","maxHp","defense","sightRange","producing","buildLeft",
                        "queueLen","rallyX","rallyY"];

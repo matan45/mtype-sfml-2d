@@ -10,6 +10,11 @@ import * from "@mtype-sfml/Sfml.mt";
 import * from "@mtype-sfml/Graphics.mt";
 import * from "@mtype-sfml/ImGui.mt";
 
+class CommandMode {
+    public static function normal():     int { return 0; }
+    public static function attackMove(): int { return 1; }
+}
+
 class InputState {
     public int   mouseX;
     public int   mouseY;
@@ -20,6 +25,9 @@ class InputState {
     public float wheelDelta;
     public bool  debugDraw;
     public bool  quitRequested;
+    public bool  attackMovePressed;
+    public bool  stopPressed;
+    public int   commandMode;
     // True if any ImGui window was hovered at the end of the *previous*
     // frame. Used to gate mouse-down edges so HUD clicks don't fall
     // through to the world. ImGui::isWindowHovered() at pump time is
@@ -36,6 +44,9 @@ class InputState {
         this.wheelDelta = 0.0;
         this.debugDraw = false;
         this.quitRequested = false;
+        this.attackMovePressed = false;
+        this.stopPressed = false;
+        this.commandMode = CommandMode::normal();
         this.imguiHovered = false;
     }
 
@@ -44,6 +55,8 @@ class InputState {
         this.leftUpEdge = false;
         this.rightClickEdge = false;
         this.wheelDelta = 0.0;
+        this.attackMovePressed = false;
+        this.stopPressed = false;
     }
 }
 
@@ -61,6 +74,8 @@ class Input {
 
     public static int kEsc = 0;
     public static int kF1  = 0;
+    public static int kQ   = 0;
+    public static int kE   = 0;
 
     public static int mLeft  = 0;
     public static int mRight = 0;
@@ -77,6 +92,8 @@ class Input {
         Input::idMouseWheel = Sfml::mouseWheelScrolledEventId();
         Input::kEsc   = Key::escape();
         Input::kF1    = Key::f1();
+        Input::kQ     = Key::q();
+        Input::kE     = Key::e();
         Input::mLeft  = MouseButton::left();
         Input::mRight = MouseButton::right();
         Input::ready = 1;
@@ -100,9 +117,19 @@ class Input {
             } else if (ev == Input::idKeyPressed) {
                 int k = Event::key();
                 if (k == Input::kEsc) {
-                    s.quitRequested = true;
+                    if (s.commandMode != CommandMode::normal()) {
+                        s.commandMode = CommandMode::normal();
+                    } else {
+                        s.quitRequested = true;
+                    }
                 } else if (k == Input::kF1) {
                     s.debugDraw = !s.debugDraw;
+                } else if (k == Input::kQ) {
+                    s.attackMovePressed = true;
+                    s.commandMode = CommandMode::attackMove();
+                } else if (k == Input::kE) {
+                    s.stopPressed = true;
+                    s.commandMode = CommandMode::normal();
                 }
             } else if (ev == Input::idMouseDown) {
                 int b = Event::mouseButton();
