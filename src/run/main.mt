@@ -75,7 +75,6 @@ class App {
         while (win.isOpen()) {
             Input::pump(win, in);
             if (in.quitRequested) { win.close(); }
-            Minimap::handleClick(win, in, cam);
             Placement::update(reg, world, win, cam, in, pls);
             Selection::update(reg, world, win, cam, in, sel);
             Commands::apply(reg, world, win, cam, in);
@@ -140,7 +139,8 @@ class App {
 
             int minerals = reg.ctxGetInt("minerals");
             int gas      = reg.ctxGetInt("gas");
-            HudResult hr = Hud::draw(minerals, gas, fpsAvg,
+            HudResult hr = Hud::draw(win, cam, snap,
+                                       minerals, gas, fpsAvg,
                                        snap.selectedCount, selectedWorkerCount,
                                        selBase, baseQueueLen, baseBuildLeft,
                                        selBarracks, barracksQueueLen, barracksBuildLeft,
@@ -167,7 +167,6 @@ class App {
 
             win.clear(28, 32, 38, 255);
             Render::world(win, view, cam, snap, world, in, sel, pls);
-            Minimap::draw(win, cam, snap);
             ImGui::render(win);
             win.display();
         }
