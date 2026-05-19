@@ -149,18 +149,19 @@ class App {
             int powerUsed = reg.ctxGetInt("powerUsed");
             int powerCap  = reg.ctxGetInt("powerCap");
             bool lowPower = reg.ctxGetInt("lowPower") == 1;
-            HudResult hr = Hud::draw(win, cam, snap,
-                                       minerals, gas, fpsAvg,
-                                       powerUsed, powerCap, lowPower,
-                                       snap.selectedCount, selectedWorkerCount,
-                                       selectedPlayerUnitCount, selectedCombatCount,
-                                       selBase, baseQueueLen, baseBuildLeft,
-                                       selBarracks, barracksQueueLen, barracksBuildLeft,
-                                       selPowerPlant,
-                                       in.debugDraw,
-                                       in.commandMode,
-                                       selUnitE, selUnitHp, selUnitMaxHp,
-                                       selUnitAtk, selUnitDef);
+            HudInput hudInput = new HudInput(win, cam, snap,
+                                             minerals, gas, fpsAvg,
+                                             powerUsed, powerCap, lowPower,
+                                             snap.selectedCount, selectedWorkerCount,
+                                             selectedPlayerUnitCount, selectedCombatCount,
+                                             selBase, baseQueueLen, baseBuildLeft,
+                                             selBarracks, barracksQueueLen, barracksBuildLeft,
+                                             selPowerPlant,
+                                             in.debugDraw,
+                                             in.commandMode,
+                                             selUnitE, selUnitHp, selUnitMaxHp,
+                                             selUnitAtk, selUnitDef);
+            HudResult hr = Hud::draw(hudInput);
             in.debugDraw = hr.newDebugDraw;
             in.imguiHovered = hr.hovered;
             if (hr.attackMoveClicked) {

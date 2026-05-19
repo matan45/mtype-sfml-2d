@@ -48,6 +48,80 @@ class HudPool {
     }
 }
 
+value class HudInput {
+    public RenderWindow win;
+    public CameraState cam;
+    public WorldSnapshot snap;
+    public int minerals;
+    public int gas;
+    public float fps;
+    public int powerUsed;
+    public int powerCap;
+    public bool lowPower;
+    public int selectedCount;
+    public int selectedWorkerCount;
+    public int selectedPlayerUnitCount;
+    public int selectedCombatCount;
+    public int selectedBaseEntity;
+    public int baseQueueLen;
+    public float baseBuildLeft;
+    public int selectedBarracksEntity;
+    public int barracksQueueLen;
+    public float barracksBuildLeft;
+    public int selectedPowerPlantEntity;
+    public bool debugDraw;
+    public int commandMode;
+    public int selectedUnitEntity;
+    public float selectedUnitHp;
+    public float selectedUnitMaxHp;
+    public float selectedUnitAtk;
+    public float selectedUnitDef;
+
+    public constructor(RenderWindow win, CameraState cam, WorldSnapshot snap,
+                       int minerals, int gas, float fps,
+                       int powerUsed, int powerCap, bool lowPower,
+                       int selectedCount, int selectedWorkerCount,
+                       int selectedPlayerUnitCount, int selectedCombatCount,
+                       int selectedBaseEntity,
+                       int baseQueueLen, float baseBuildLeft,
+                       int selectedBarracksEntity,
+                       int barracksQueueLen, float barracksBuildLeft,
+                       int selectedPowerPlantEntity,
+                       bool debugDraw,
+                       int commandMode,
+                       int selectedUnitEntity,
+                       float selectedUnitHp, float selectedUnitMaxHp,
+                       float selectedUnitAtk, float selectedUnitDef) {
+        this.win = win;
+        this.cam = cam;
+        this.snap = snap;
+        this.minerals = minerals;
+        this.gas = gas;
+        this.fps = fps;
+        this.powerUsed = powerUsed;
+        this.powerCap = powerCap;
+        this.lowPower = lowPower;
+        this.selectedCount = selectedCount;
+        this.selectedWorkerCount = selectedWorkerCount;
+        this.selectedPlayerUnitCount = selectedPlayerUnitCount;
+        this.selectedCombatCount = selectedCombatCount;
+        this.selectedBaseEntity = selectedBaseEntity;
+        this.baseQueueLen = baseQueueLen;
+        this.baseBuildLeft = baseBuildLeft;
+        this.selectedBarracksEntity = selectedBarracksEntity;
+        this.barracksQueueLen = barracksQueueLen;
+        this.barracksBuildLeft = barracksBuildLeft;
+        this.selectedPowerPlantEntity = selectedPowerPlantEntity;
+        this.debugDraw = debugDraw;
+        this.commandMode = commandMode;
+        this.selectedUnitEntity = selectedUnitEntity;
+        this.selectedUnitHp = selectedUnitHp;
+        this.selectedUnitMaxHp = selectedUnitMaxHp;
+        this.selectedUnitAtk = selectedUnitAtk;
+        this.selectedUnitDef = selectedUnitDef;
+    }
+}
+
 class Hud {
     public static HudPool? pool = null;
 
@@ -56,22 +130,34 @@ class Hud {
         return Hud::pool;
     }
 
-    public static function draw(RenderWindow win, CameraState cam,
-                                  WorldSnapshot snap,
-                                  int minerals, int gas, float fps,
-                                  int powerUsed, int powerCap, bool lowPower,
-                                  int selectedCount, int selectedWorkerCount,
-                                  int selectedPlayerUnitCount, int selectedCombatCount,
-                                  int selectedBaseEntity,
-                                  int baseQueueLen, float baseBuildLeft,
-                                  int selectedBarracksEntity,
-                                  int barracksQueueLen, float barracksBuildLeft,
-                                  int selectedPowerPlantEntity,
-                                  bool debugDraw,
-                                  int commandMode,
-                                  int selectedUnitEntity,
-                                  float selUnitHp, float selUnitMaxHp,
-                                  float selUnitAtk, float selUnitDef): HudResult {
+    public static function draw(HudInput input): HudResult {
+        RenderWindow win = input.win;
+        CameraState cam = input.cam;
+        WorldSnapshot snap = input.snap;
+        int minerals = input.minerals;
+        int gas = input.gas;
+        float fps = input.fps;
+        int powerUsed = input.powerUsed;
+        int powerCap = input.powerCap;
+        bool lowPower = input.lowPower;
+        int selectedCount = input.selectedCount;
+        int selectedWorkerCount = input.selectedWorkerCount;
+        int selectedPlayerUnitCount = input.selectedPlayerUnitCount;
+        int selectedCombatCount = input.selectedCombatCount;
+        int selectedBaseEntity = input.selectedBaseEntity;
+        int baseQueueLen = input.baseQueueLen;
+        float baseBuildLeft = input.baseBuildLeft;
+        int selectedBarracksEntity = input.selectedBarracksEntity;
+        int barracksQueueLen = input.barracksQueueLen;
+        float barracksBuildLeft = input.barracksBuildLeft;
+        int selectedPowerPlantEntity = input.selectedPowerPlantEntity;
+        bool debugDraw = input.debugDraw;
+        int commandMode = input.commandMode;
+        int selectedUnitEntity = input.selectedUnitEntity;
+        float selUnitHp = input.selectedUnitHp;
+        float selUnitMaxHp = input.selectedUnitMaxHp;
+        float selUnitAtk = input.selectedUnitAtk;
+        float selUnitDef = input.selectedUnitDef;
         HudResult r = new HudResult();
         r.newDebugDraw = debugDraw;
 
