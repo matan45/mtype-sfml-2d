@@ -147,30 +147,30 @@ class Commands {
 
     public static function apply(Registry reg, World world,
                                    RenderWindow win, CameraState cam,
-                                   InputState in): void {
-        if (in.stopPressed) {
+                                   InputState input): void {
+        if (input.stopPressed) {
             Commands::stopSelected(reg);
             return;
         }
 
-        if (in.commandMode == CommandMode::attackMove()) {
-            if (in.rightClickEdge) {
-                in.commandMode = CommandMode::normal();
-            } else if (in.leftDownEdge) {
-                float[] aw = Selection::cursorWorld(win, cam, in);
+        if (input.commandMode == CommandMode::attackMove()) {
+            if (input.rightClickEdge) {
+                input.commandMode = CommandMode::normal();
+            } else if (input.leftDownEdge) {
+                float[] aw = Selection::cursorWorld(win, cam, input);
                 Commands::issueAttackMove(reg, world, aw[0], aw[1]);
-                in.commandMode = CommandMode::normal();
-                in.leftDownEdge = false;
-                in.leftUpEdge = false;
-                in.leftHeld = false;
+                input.commandMode = CommandMode::normal();
+                input.leftDownEdge = false;
+                input.leftUpEdge = false;
+                input.leftHeld = false;
                 return;
             } else {
                 return;
             }
         }
 
-        if (!in.rightClickEdge) { return; }
-        float[] cw = Selection::cursorWorld(win, cam, in);
+        if (!input.rightClickEdge) { return; }
+        float[] cw = Selection::cursorWorld(win, cam, input);
         float wx = cw[0];
         float wy = cw[1];
 

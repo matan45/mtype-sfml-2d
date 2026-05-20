@@ -62,7 +62,7 @@ class App {
         Spawn::initialMap(reg, world);
 
         Clock clk = Clocks::create();
-        InputState in = new InputState();
+        InputState input = new InputState();
         SelectionState sel = new SelectionState();
         PlacementState pls = new PlacementState();
         WorldSnapshot snap = new WorldSnapshot();
@@ -74,11 +74,11 @@ class App {
         float fpsAvg    = 60.0;
 
         while (win.isOpen()) {
-            Input::pump(win, in);
-            if (in.quitRequested) { win.close(); }
-            Placement::update(reg, world, win, cam, in, pls);
-            Commands::apply(reg, world, win, cam, in);
-            Selection::update(reg, world, win, cam, in, sel);
+            Input::pump(win, input);
+            if (input.quitRequested) { win.close(); }
+            Placement::update(reg, world, win, cam, input, pls);
+            Commands::apply(reg, world, win, cam, input);
+            Selection::update(reg, world, win, cam, input, sel);
 
             float frame = clk.restartSeconds();
             if (frame > maxFrame) { frame = maxFrame; }
@@ -103,7 +103,7 @@ class App {
                 acc = acc - fixedDt;
             }
 
-            CameraCtrl::update(cam, in, frame);
+            CameraCtrl::update(cam, input, frame);
             CameraCtrl::apply(view, cam);
             Sampling::refresh(reg, snap);
             Power::refresh(reg);
@@ -157,19 +157,19 @@ class App {
                                              selBase, baseQueueLen, baseBuildLeft,
                                              selBarracks, barracksQueueLen, barracksBuildLeft,
                                              selPowerPlant,
-                                             in.debugDraw,
-                                             in.commandMode,
+                                             input.debugDraw,
+                                             input.commandMode,
                                              selUnitE, selUnitHp, selUnitMaxHp,
                                              selUnitAtk, selUnitDef);
             HudResult hr = Hud::draw(hudInput);
-            in.debugDraw = hr.newDebugDraw;
-            in.imguiHovered = hr.hovered;
+            input.debugDraw = hr.newDebugDraw;
+            input.imguiHovered = hr.hovered;
             if (hr.attackMoveClicked) {
-                in.commandMode = CommandMode::attackMove();
+                input.commandMode = CommandMode::attackMove();
             }
             if (hr.stopClicked) {
                 Commands::stopSelected(reg);
-                in.commandMode = CommandMode::normal();
+                input.commandMode = CommandMode::normal();
             }
             if (hr.trainWorkerClicked && selBase != 0) {
                 Production::tryQueueUnit(reg, selBase);
@@ -191,7 +191,7 @@ class App {
             }
 
             win.clear(28, 32, 38, 255);
-            Render::world(win, view, cam, snap, world, in, sel, pls);
+            Render::world(win, view, cam, snap, world, input, sel, pls);
             ImGui::render(win);
             win.display();
         }
