@@ -55,6 +55,10 @@ class App {
         World    world = Box2D::createWorld(0.0, 0.0);
         Registry reg   = Entts::createRegistry();
         Schema::registerAll(reg);
+        // EnttView::next() uses 0 as its exhausted sentinel, and the
+        // gameplay code also treats entity id 0 as "none". Reserve it so
+        // real game entities start at 1 and are visible to all view loops.
+        reg.create();
 
         View view = Views::create(0.0, 0.0, 60.0, 33.75);
         CameraState cam = new CameraState(0.0, 0.0, 60.0, 33.75);

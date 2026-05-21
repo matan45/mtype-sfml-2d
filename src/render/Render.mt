@@ -95,6 +95,80 @@ class Render {
         return (int)snap.fogStateF[cy * gs + cx];
     }
 
+    public static function drawPhysicsDebug(RenderWindow win, World physics): void {
+        RenderPool p = Render::ensurePool();
+
+        physics.setDebugDrawFlags(true, false, false, false, true, false);
+        physics.draw();
+
+        int lineCount = 0;
+        int pc = DebugDraw::polygonCount(physics);
+        int j = 0;
+        while (j < pc) {
+            float[] d = DebugDraw::polygon(physics, j);
+            int vc = (int)d[0];
+            if (vc >= 3) { lineCount = lineCount + vc; }
+            j = j + 1;
+        }
+
+        int sc = DebugDraw::segmentCount(physics);
+        lineCount = lineCount + sc;
+
+        if (lineCount > 0) {
+            VertexArray va = p.debugSegments;
+            int need = lineCount * 2;
+            if (va.size() != need) { va.resize(need); }
+
+            int out = 0;
+            j = 0;
+            while (j < pc) {
+                float[] d = DebugDraw::polygon(physics, j);
+                int vc = (int)d[0];
+                if (vc >= 3) {
+                    int k = 0;
+                    while (k < vc) {
+                        int a = 2 + k * 2;
+                        int next = k + 1;
+                        if (next >= vc) { next = 0; }
+                        int b = 2 + next * 2;
+                        va.setVertex(out * 2,     d[a], d[a + 1], 230, 230, 60, 230, 0.0, 0.0);
+                        va.setVertex(out * 2 + 1, d[b], d[b + 1], 230, 230, 60, 230, 0.0, 0.0);
+                        out = out + 1;
+                        k = k + 1;
+                    }
+                }
+                j = j + 1;
+            }
+
+            j = 0;
+            while (j < sc) {
+                float[] s = DebugDraw::segment(physics, j);
+                va.setVertex(out * 2,     s[0], s[1], 230, 230, 60, 230, 0.0, 0.0);
+                va.setVertex(out * 2 + 1, s[2], s[3], 230, 230, 60, 230, 0.0, 0.0);
+                out = out + 1;
+                j = j + 1;
+            }
+
+            Draw::vertexArray(win, va);
+            Camera::resetGLStates(win);
+        }
+
+        int cc = DebugDraw::circleCount(physics);
+        j = 0;
+        while (j < cc) {
+            float[] d = DebugDraw::circle(physics, j);
+            float cx = d[0];
+            float cy = d[1];
+            float radius = d[2];
+            CircleShape c = p.debugCircle;
+            c.setRadius(radius);
+            c.setOrigin(radius, radius);
+            c.setPosition(cx, cy);
+            Draw::circle(win, c);
+            j = j + 1;
+        }
+    }
+
 
     public static function world(RenderWindow win, View view, CameraState cam,
                                    WorldSnapshot snap, World physics,
@@ -319,41 +393,6 @@ class Render {
             i = i + 1;
         }
 
-        // Debug-draw overlay (Box2D shapes).
-        if (in.debugDraw) {
-            physics.setDebugDrawFlags(true, false, false, false, true, false);
-            physics.draw();
-
-            int cc = DebugDraw::circleCount(physics);
-            int j = 0;
-            while (j < cc) {
-                float[] d = DebugDraw::circle(physics, j);
-                float cx = d[0];
-                float cy = d[1];
-                float radius = d[2];
-                CircleShape c = p.debugCircle;
-                c.setRadius(radius);
-                c.setOrigin(radius, radius);
-                c.setPosition(cx, cy);
-                Draw::circle(win, c);
-                j = j + 1;
-            }
-            int sc = DebugDraw::segmentCount(physics);
-            if (sc > 0) {
-                VertexArray va = p.debugSegments;
-                int need = sc * 2;
-                if (va.size() < need) { va.resize(need); }
-                j = 0;
-                while (j < sc) {
-                    float[] s = DebugDraw::segment(physics, j);
-                    va.setVertex(j * 2,     s[0], s[1], 230, 230, 60, 220, 0.0, 0.0);
-                    va.setVertex(j * 2 + 1, s[2], s[3], 230, 230, 60, 220, 0.0, 0.0);
-                    j = j + 1;
-                }
-                Draw::vertexArray(win, va);
-            }
-        }
-
         // Placement preview (world space, drawn on top of buildings/units).
         if (pls.active) {
             float hw = GameConst::barracksHalfW();
@@ -387,6 +426,12 @@ class Render {
         // (default-state primitives, ≤256 rects per frame). See the file
         // comment in FogShader.mt for why we don't use a shader.
         FogShader::drawWorld(win, snap);
+
+        // Debug-draw overlay (Box2D shapes). Keep this above fog so F1 is
+        // useful even in explored/unexplored areas.
+        if (in.debugDraw) {
+            Render::drawPhysicsDebug(win, physics);
+        }
 
         Camera::resetView(win);
 
