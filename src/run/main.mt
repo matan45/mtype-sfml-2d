@@ -32,6 +32,7 @@ import * from "../sim/Combat.mt";
 import * from "../sim/Construct.mt";
 import * from "../sim/Placement.mt";
 import * from "../sim/Production.mt";
+import * from "../sim/Power.mt";
 import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
 import * from "../sim/Commands.mt";
@@ -54,6 +55,10 @@ class App {
         World    world = Box2D::createWorld(0.0, 0.0);
         Registry reg   = Entts::createRegistry();
         Schema::registerAll(reg);
+        // EnttView::next() uses 0 as its exhausted sentinel, and the
+        // gameplay code also treats entity id 0 as "none". Reserve it so
+        // real game entities start at 1 and are visible to all view loops.
+        reg.create();
 
         View view = Views::create(0.0, 0.0, 60.0, 33.75);
         CameraState cam = new CameraState(0.0, 0.0, 60.0, 33.75);
@@ -61,7 +66,7 @@ class App {
         Spawn::initialMap(reg, world);
 
         Clock clk = Clocks::create();
-        InputState in = new InputState();
+        InputState input = new InputState();
         SelectionState sel = new SelectionState();
         PlacementState pls = new PlacementState();
         WorldSnapshot snap = new WorldSnapshot();
@@ -73,12 +78,11 @@ class App {
         float fpsAvg    = 60.0;
 
         while (win.isOpen()) {
-            Input::pump(win, in);
-            if (in.quitRequested) { win.close(); }
-            Minimap::handleClick(win, in, cam);
-            Placement::update(reg, world, win, cam, in, pls);
-            Selection::update(reg, world, win, cam, in, sel);
-            Commands::apply(reg, world, win, cam, in);
+            Input::pump(win, input);
+            if (input.quitRequested) { win.close(); }
+            Placement::update(reg, world, win, cam, input, pls);
+            Commands::apply(reg, world, win, cam, input);
+            Selection::update(reg, world, win, cam, input, sel);
 
             float frame = clk.restartSeconds();
             if (frame > maxFrame) { frame = maxFrame; }
@@ -95,15 +99,18 @@ class App {
                 Steering::run(reg, fixedDt);
                 world.step(fixedDt, subSteps);
                 Events::drain(world);
+                Power::refresh(reg);
                 Production::run(reg, world, fixedDt);
                 Cleanup::run(reg, world);
+                Power::refresh(reg);
                 Fog::update(reg);
                 acc = acc - fixedDt;
             }
 
-            CameraCtrl::update(cam, in, frame);
+            CameraCtrl::update(cam, input, frame);
             CameraCtrl::apply(view, cam);
             Sampling::refresh(reg, snap);
+            Power::refresh(reg);
 
             ImGui::update(win, frame * 1000.0);
 
@@ -123,7 +130,10 @@ class App {
                 barracksQueueLen  = b.queueLen;
                 barracksBuildLeft = b.buildLeft;
             }
+            int selPowerPlant = App::selectedPowerPlant(reg);
             int selectedWorkerCount = App::countSelectedWorkers(reg);
+            int selectedPlayerUnitCount = App::countSelectedPlayerUnits(reg);
+            int selectedCombatCount = App::countSelectedCombatUnits(reg);
 
             int selUnitE = App::singleSelectedUnit(reg);
             float selUnitHp    = 0.0;
@@ -140,15 +150,31 @@ class App {
 
             int minerals = reg.ctxGetInt("minerals");
             int gas      = reg.ctxGetInt("gas");
-            HudResult hr = Hud::draw(minerals, gas, fpsAvg,
-                                       snap.selectedCount, selectedWorkerCount,
-                                       selBase, baseQueueLen, baseBuildLeft,
-                                       selBarracks, barracksQueueLen, barracksBuildLeft,
-                                       in.debugDraw,
-                                       selUnitE, selUnitHp, selUnitMaxHp,
-                                       selUnitAtk, selUnitDef);
-            in.debugDraw = hr.newDebugDraw;
-            in.imguiHovered = hr.hovered;
+            int powerUsed = reg.ctxGetInt("powerUsed");
+            int powerCap  = reg.ctxGetInt("powerCap");
+            bool lowPower = reg.ctxGetInt("lowPower") == 1;
+            HudInput hudInput = new HudInput(win, cam, snap,
+                                             minerals, gas, fpsAvg,
+                                             powerUsed, powerCap, lowPower,
+                                             snap.selectedCount, selectedWorkerCount,
+                                             selectedPlayerUnitCount, selectedCombatCount,
+                                             selBase, baseQueueLen, baseBuildLeft,
+                                             selBarracks, barracksQueueLen, barracksBuildLeft,
+                                             selPowerPlant,
+                                             input.debugDraw,
+                                             input.commandMode,
+                                             selUnitE, selUnitHp, selUnitMaxHp,
+                                             selUnitAtk, selUnitDef);
+            HudResult hr = Hud::draw(hudInput);
+            input.debugDraw = hr.newDebugDraw;
+            input.imguiHovered = hr.hovered;
+            if (hr.attackMoveClicked) {
+                input.commandMode = CommandMode::attackMove();
+            }
+            if (hr.stopClicked) {
+                Commands::stopSelected(reg);
+                input.commandMode = CommandMode::normal();
+            }
             if (hr.trainWorkerClicked && selBase != 0) {
                 Production::tryQueueUnit(reg, selBase);
             }
@@ -164,10 +190,12 @@ class App {
             if (hr.placeCommandCenterClicked && !pls.active) {
                 pls.start(BuildingKind::commandCenter());
             }
+            if (hr.placePowerPlantClicked && !pls.active) {
+                pls.start(BuildingKind::powerPlant());
+            }
 
             win.clear(28, 32, 38, 255);
-            Render::world(win, view, cam, snap, world, in, sel, pls);
-            Minimap::draw(win, cam, snap);
+            Render::world(win, view, cam, snap, world, input, sel, pls);
             ImGui::render(win);
             win.display();
         }
@@ -214,6 +242,19 @@ class App {
         return found;
     }
 
+    public static function selectedPowerPlant(Registry reg): int {
+        string[] need = ["Selected", "Building", "PowerPlant"];
+        EnttView v = reg.view(need);
+        int found = 0;
+        int e = v.next();
+        while (e != 0) {
+            if (!reg.has(e, "Ghost")) { found = e; }
+            e = v.next();
+        }
+        v.destroy();
+        return found;
+    }
+
     // Number of Selected player workers. Drives the visibility of the
     // Build panel.
     public static function countSelectedWorkers(Registry reg): int {
@@ -222,6 +263,30 @@ class App {
         int n = 0;
         int e = v.next();
         while (e != 0) { n = n + 1; e = v.next(); }
+        v.destroy();
+        return n;
+    }
+
+    public static function countSelectedPlayerUnits(Registry reg): int {
+        string[] need = ["Selected", "Unit", "PlayerControlled"];
+        EnttView v = reg.view(need);
+        int n = 0;
+        int e = v.next();
+        while (e != 0) { n = n + 1; e = v.next(); }
+        v.destroy();
+        return n;
+    }
+
+    public static function countSelectedCombatUnits(Registry reg): int {
+        string[] need = ["Selected", "Unit", "PlayerControlled"];
+        EnttView v = reg.view(need);
+        int n = 0;
+        int e = v.next();
+        while (e != 0) {
+            Unit u = (Unit) reg.get(e, "Unit");
+            if (u.attackDamage > 0.0) { n = n + 1; }
+            e = v.next();
+        }
         v.destroy();
         return n;
     }

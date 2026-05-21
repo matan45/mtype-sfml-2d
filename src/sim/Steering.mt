@@ -60,6 +60,14 @@ class Steering {
             if (d2 < 0.04) {
                 // Arrived. Clear order, path, and stop the body.
                 b.setLinearVelocity(0.0, 0.0);
+                if (reg.has(e, "AttackMoveOrder")) {
+                    AttackMoveOrder amo = (AttackMoveOrder) reg.get(e, "AttackMoveOrder");
+                    float adx = mo.tx - amo.tx;
+                    float ady = mo.ty - amo.ty;
+                    if (adx * adx + ady * ady < 0.25) {
+                        reg.remove(e, "AttackMoveOrder");
+                    }
+                }
                 reg.remove(e, "MoveOrder");
                 if (reg.has(e, "HasPath")) { reg.remove(e, "HasPath"); }
                 Pathing::clearPath(e);

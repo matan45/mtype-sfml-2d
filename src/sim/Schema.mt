@@ -43,6 +43,11 @@ class AttackOrder {
     public int targetEntity;
 }
 
+class AttackMoveOrder {
+    public float tx;
+    public float ty;
+}
+
 class Building {
     public int   kind;
     public int   faction;
@@ -121,6 +126,10 @@ class Schema {
         int[]    tA = [Entts::fieldInt()];
         reg.registerComponent("AttackOrder", "AttackOrder", fA, tA);
 
+        string[] fAM = ["tx","ty"];
+        int[]    tAM = [Entts::fieldFloat(), Entts::fieldFloat()];
+        reg.registerComponent("AttackMoveOrder", "AttackMoveOrder", fAM, tAM);
+
         string[] fB = ["kind","faction","hp","maxHp","defense","sightRange","producing","buildLeft",
                        "queueLen","rallyX","rallyY"];
         int[]    tB = [Entts::fieldInt(),   Entts::fieldInt(),
@@ -169,6 +178,7 @@ class Schema {
         reg.registerTag("Barracks");
         reg.registerTag("RefineryTag");
         reg.registerTag("CommandCenterTag");
+        reg.registerTag("PowerPlant");
         reg.registerTag("GasGeyser");
         reg.registerTag("Ghost");
         reg.registerTag("HasPath");
@@ -177,5 +187,8 @@ class Schema {
         // ---- ctx vars ----
         reg.ctxSetInt("minerals", GameConst::startingMinerals());
         reg.ctxSetInt("gas", 0);
+        reg.ctxSetInt("powerUsed", 0);
+        reg.ctxSetInt("powerCap", 0);
+        reg.ctxSetInt("lowPower", 0);
     }
 }

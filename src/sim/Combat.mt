@@ -64,11 +64,30 @@ class Combat {
 
                 if (target != 0) {
                     Combat::pursueAndStrike(reg, world, e, u, target, dt);
+                } else if (reg.has(e, "AttackMoveOrder")) {
+                    Combat::resumeAttackMove(reg, world, e);
                 }
             }
             e = v.next();
         }
         v.destroy();
+    }
+
+    public static function resumeAttackMove(Registry reg, World world, int e): void {
+        if (!reg.has(e, "PhysicsBody")) { return; }
+        AttackMoveOrder amo = (AttackMoveOrder) reg.get(e, "AttackMoveOrder");
+        PhysicsBody pb = (PhysicsBody) reg.get(e, "PhysicsBody");
+        int needsOrder = 0;
+        if (!reg.has(e, "MoveOrder")) { needsOrder = 1; }
+        else {
+            MoveOrder mo = (MoveOrder) reg.get(e, "MoveOrder");
+            float dx = mo.tx - amo.tx;
+            float dy = mo.ty - amo.ty;
+            if (dx * dx + dy * dy > 0.25) { needsOrder = 1; }
+        }
+        if (needsOrder == 1) {
+            Combat::setMove(reg, e, pb.bodyHandle, amo.tx, amo.ty, world);
+        }
     }
 
     public static function pursueAndStrike(Registry reg, World world,
@@ -143,6 +162,18 @@ class Combat {
                 if (!reg.has(attacker, "HasPath")) { reg.emplaceTag(attacker, "HasPath"); }
             }
         }
+    }
+
+    public static function setMove(Registry reg, int e, int bodyHandle,
+                                     float tx, float ty, World world): void {
+        MoveOrder mo = new MoveOrder();
+        mo.tx = tx;
+        mo.ty = ty;
+        mo.hasPath = 0;
+        mo.pathIdx = 0;
+        reg.emplace(e, "MoveOrder", mo);
+        Pathing::plan(e, world, bodyHandle, tx, ty);
+        if (!reg.has(e, "HasPath")) { reg.emplaceTag(e, "HasPath"); }
     }
 }
 

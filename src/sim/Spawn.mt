@@ -357,6 +357,19 @@ class Spawn {
                                      "CommandCenterTag");
     }
 
+    public static function powerPlantGhost(Registry reg, World world,
+                                            float x, float y): int {
+        return Spawn::buildingGhost(reg, world, x, y,
+                                     BuildingKind::powerPlant(),
+                                     GameConst::powerPlantHalfW(),
+                                     GameConst::powerPlantHalfH(),
+                                     GameConst::powerPlantHp(),
+                                     0.0,
+                                     GameConst::powerPlantBuildTime(),
+                                     0,
+                                     "PowerPlant");
+    }
+
     // Shared ghost builder. `tag` is the per-kind discriminator tag.
     public static function buildingGhost(Registry reg, World world,
                                            float x, float y, int kind,
@@ -444,6 +457,12 @@ class Spawn {
             hp    = GameConst::refineryHp();
             def   = GameConst::refineryDefense();
             sight = GameConst::refinerySight();
+        } else if (c.buildingKind == BuildingKind::powerPlant()) {
+            halfW = GameConst::powerPlantHalfW();
+            halfH = GameConst::powerPlantHalfH();
+            hp    = GameConst::powerPlantHp();
+            def   = GameConst::powerPlantDefense();
+            sight = GameConst::powerPlantSight();
         } else if (c.buildingKind == BuildingKind::commandCenter()) {
             halfW = GameConst::commandCenterHalfW();
             halfH = GameConst::commandCenterHalfH();
