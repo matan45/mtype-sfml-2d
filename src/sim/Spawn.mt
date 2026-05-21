@@ -12,6 +12,7 @@ import * from "../game/Constants.mt";
 import * from "../audio/Audio.mt";
 import * from "./Schema.mt";
 import * from "./Pathing.mt";
+import * from "./Upgrade.mt";
 
 class Spawn {
     // Create a player worker at (x, y). Dynamic body, circle hard shape,
@@ -108,7 +109,7 @@ class Spawn {
         u.radius = GameConst::gruntRadius();
         u.speed = GameConst::gruntSpeed();
         u.attackRange = GameConst::gruntRange();
-        u.attackDamage = GameConst::gruntDamage();
+        u.attackDamage = Upgrade::gruntDamageFor(reg, Faction::player());
         u.attackCooldown = GameConst::gruntCooldown();
         u.defense = GameConst::gruntDefense();
         u.sightRange = GameConst::gruntSight();

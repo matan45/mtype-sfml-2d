@@ -190,5 +190,8 @@ class Schema {
         reg.ctxSetInt("powerUsed", 0);
         reg.ctxSetInt("powerCap", 0);
         reg.ctxSetInt("lowPower", 0);
+        reg.ctxSetInt("infantryWeaponsLevel", 0);
+        reg.ctxSetInt("infantryWeaponsResearching", 0);
+        reg.ctxSetFloat("infantryWeaponsBuildLeft", 0.0);
     }
 }

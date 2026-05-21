@@ -21,6 +21,7 @@ class HudResult {
     public bool placePowerPlantClicked;
     public bool attackMoveClicked;
     public bool stopClicked;
+    public bool researchInfantryWeaponsClicked;
     public bool newDebugDraw;
     public bool hovered;
 
@@ -33,6 +34,7 @@ class HudResult {
         this.placePowerPlantClicked    = false;
         this.attackMoveClicked         = false;
         this.stopClicked               = false;
+        this.researchInfantryWeaponsClicked = false;
         this.newDebugDraw              = false;
         this.hovered                   = false;
     }
@@ -69,6 +71,9 @@ value class HudInput {
     public int barracksQueueLen;
     public float barracksBuildLeft;
     public int selectedPowerPlantEntity;
+    public int infantryWeaponsLevel;
+    public bool infantryWeaponsResearching;
+    public float infantryWeaponsBuildLeft;
     public bool debugDraw;
     public int commandMode;
     public int selectedUnitEntity;
@@ -87,6 +92,9 @@ value class HudInput {
                        int selectedBarracksEntity,
                        int barracksQueueLen, float barracksBuildLeft,
                        int selectedPowerPlantEntity,
+                       int infantryWeaponsLevel,
+                       bool infantryWeaponsResearching,
+                       float infantryWeaponsBuildLeft,
                        bool debugDraw,
                        int commandMode,
                        int selectedUnitEntity,
@@ -112,6 +120,9 @@ value class HudInput {
         this.barracksQueueLen = barracksQueueLen;
         this.barracksBuildLeft = barracksBuildLeft;
         this.selectedPowerPlantEntity = selectedPowerPlantEntity;
+        this.infantryWeaponsLevel = infantryWeaponsLevel;
+        this.infantryWeaponsResearching = infantryWeaponsResearching;
+        this.infantryWeaponsBuildLeft = infantryWeaponsBuildLeft;
         this.debugDraw = debugDraw;
         this.commandMode = commandMode;
         this.selectedUnitEntity = selectedUnitEntity;
@@ -151,6 +162,9 @@ class Hud {
         int barracksQueueLen = input.barracksQueueLen;
         float barracksBuildLeft = input.barracksBuildLeft;
         int selectedPowerPlantEntity = input.selectedPowerPlantEntity;
+        int infantryWeaponsLevel = input.infantryWeaponsLevel;
+        bool infantryWeaponsResearching = input.infantryWeaponsResearching;
+        float infantryWeaponsBuildLeft = input.infantryWeaponsBuildLeft;
         bool debugDraw = input.debugDraw;
         int commandMode = input.commandMode;
         int selectedUnitEntity = input.selectedUnitEntity;
@@ -191,12 +205,17 @@ class Hud {
                                     selectedBarracksEntity,
                                     barracksQueueLen, barracksBuildLeft,
                                     selectedPowerPlantEntity,
+                                    infantryWeaponsLevel,
+                                    infantryWeaponsResearching,
+                                    infantryWeaponsBuildLeft,
                                     selectedUnitEntity, selUnitHp,
                                     selUnitMaxHp, selUnitAtk, selUnitDef);
-            Hud::drawCommandPanel(winW, hudH, minerals,
+            Hud::drawCommandPanel(winW, hudH, minerals, gas,
                                   lowPower,
                                   selectedWorkerCount, selectedPlayerUnitCount, selectedCombatCount,
                                   selectedBaseEntity, selectedBarracksEntity,
+                                  infantryWeaponsLevel,
+                                  infantryWeaponsResearching,
                                   commandMode, r);
         }
         ImGui::end();
@@ -256,6 +275,9 @@ class Hud {
                                                int barracksQueueLen,
                                                float barracksBuildLeft,
                                                int selectedPowerPlantEntity,
+                                               int infantryWeaponsLevel,
+                                               bool infantryWeaponsResearching,
+                                               float infantryWeaponsBuildLeft,
                                                int selectedUnitEntity,
                                                float selUnitHp,
                                                float selUnitMaxHp,
@@ -302,6 +324,14 @@ class Hud {
                 ImGui::separator();
                 ImGui::textColored(0.70, 0.82, 0.98, 1.0, "BARRACKS");
                 Hud::drawQueue(barracksQueueLen, barracksBuildLeft, GameConst::gruntBuildTime());
+                if (infantryWeaponsResearching) {
+                    float frac = 1.0 - Hud::fraction(infantryWeaponsBuildLeft,
+                                                       GameConst::infantryWeaponsResearchTime());
+                    ImGui::progressBar(frac, -1.0, 16.0,
+                                       "Infantry Weapons  " + Hud::fmt1(infantryWeaponsBuildLeft) + "s");
+                } else if (infantryWeaponsLevel >= GameConst::infantryWeaponsMaxLevel()) {
+                    ImGui::text("Infantry Weapons: Level " + infantryWeaponsLevel);
+                }
             }
 
             if (selectedPowerPlantEntity != 0) {
@@ -315,12 +345,15 @@ class Hud {
     }
 
     public static function drawCommandPanel(int winW, int hudH, int minerals,
+                                             int gas,
                                              bool lowPower,
                                              int selectedWorkerCount,
                                              int selectedPlayerUnitCount,
                                              int selectedCombatCount,
                                              int selectedBaseEntity,
                                              int selectedBarracksEntity,
+                                             int infantryWeaponsLevel,
+                                             bool infantryWeaponsResearching,
                                              int commandMode,
                                              HudResult r): void {
         float pad = 14.0;
@@ -384,6 +417,16 @@ class Hud {
                 if (Hud::productionButton("Train Grunt", GameConst::gruntCost(), minerals, lowPower)) {
                     r.trainGruntClicked = true;
                 }
+                ImGui::spacing();
+                ImGui::textColored(0.70, 0.82, 0.98, 1.0, "RESEARCH");
+                if (Hud::researchButton("Infantry Weapons",
+                                        GameConst::infantryWeaponsMineralCost(),
+                                        GameConst::infantryWeaponsGasCost(),
+                                        minerals, gas, lowPower,
+                                        infantryWeaponsLevel,
+                                        infantryWeaponsResearching)) {
+                    r.researchInfantryWeaponsClicked = true;
+                }
             }
 
             if (any == 0) {
@@ -421,6 +464,29 @@ class Hud {
             return false;
         }
         if (minerals < cost) {
+            ImGui::textDisabled(full);
+            return false;
+        }
+        return ImGui::button(full);
+    }
+
+    public static function researchButton(string label, int mineralCost, int gasCost,
+                                           int minerals, int gas, bool lowPower,
+                                           int level, bool researching): bool {
+        string full = label + " [" + mineralCost + " min / " + gasCost + " gas]";
+        if (level >= GameConst::infantryWeaponsMaxLevel()) {
+            ImGui::textDisabled(full + " - researched");
+            return false;
+        }
+        if (researching) {
+            ImGui::textDisabled(full + " - researching");
+            return false;
+        }
+        if (lowPower) {
+            ImGui::textDisabled(full + " - low power");
+            return false;
+        }
+        if (minerals < mineralCost || gas < gasCost) {
             ImGui::textDisabled(full);
             return false;
         }

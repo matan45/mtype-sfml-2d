@@ -32,6 +32,7 @@ import * from "../sim/Combat.mt";
 import * from "../sim/Construct.mt";
 import * from "../sim/Placement.mt";
 import * from "../sim/Production.mt";
+import * from "../sim/Upgrade.mt";
 import * from "../sim/Power.mt";
 import * from "../sim/Cleanup.mt";
 import * from "../sim/Sampling.mt";
@@ -101,6 +102,7 @@ class App {
                 Events::drain(world);
                 Power::refresh(reg);
                 Production::run(reg, world, fixedDt);
+                Upgrade::run(reg, fixedDt);
                 Cleanup::run(reg, world);
                 Power::refresh(reg);
                 Fog::update(reg);
@@ -153,6 +155,9 @@ class App {
             int powerUsed = reg.ctxGetInt("powerUsed");
             int powerCap  = reg.ctxGetInt("powerCap");
             bool lowPower = reg.ctxGetInt("lowPower") == 1;
+            int infantryWeaponsLevel = reg.ctxGetInt("infantryWeaponsLevel");
+            bool infantryWeaponsResearching = reg.ctxGetInt("infantryWeaponsResearching") == 1;
+            float infantryWeaponsBuildLeft = reg.ctxGetFloat("infantryWeaponsBuildLeft");
             HudInput hudInput = new HudInput(win, cam, snap,
                                              minerals, gas, fpsAvg,
                                              powerUsed, powerCap, lowPower,
@@ -161,6 +166,9 @@ class App {
                                              selBase, baseQueueLen, baseBuildLeft,
                                              selBarracks, barracksQueueLen, barracksBuildLeft,
                                              selPowerPlant,
+                                             infantryWeaponsLevel,
+                                             infantryWeaponsResearching,
+                                             infantryWeaponsBuildLeft,
                                              input.debugDraw,
                                              input.commandMode,
                                              selUnitE, selUnitHp, selUnitMaxHp,
@@ -180,6 +188,9 @@ class App {
             }
             if (hr.trainGruntClicked && selBarracks != 0) {
                 Production::tryQueueUnit(reg, selBarracks);
+            }
+            if (hr.researchInfantryWeaponsClicked && selBarracks != 0) {
+                Upgrade::tryStartInfantryWeapons(reg);
             }
             if (hr.placeBarracksClicked && !pls.active) {
                 pls.start(BuildingKind::barracks());

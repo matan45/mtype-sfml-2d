@@ -129,6 +129,12 @@ class GameConst {
     public static function gruntBuildTime():   float { return 4.0; }
     public static function startingMinerals(): int   { return 250; }
 
+    public static function infantryWeaponsMineralCost(): int   { return 100; }
+    public static function infantryWeaponsGasCost():     int   { return 50; }
+    public static function infantryWeaponsResearchTime(): float { return 12.0; }
+    public static function infantryWeaponsDamageBonus(): float { return 3.0; }
+    public static function infantryWeaponsMaxLevel():    int   { return 1; }
+
     public static function buildProximity():   float { return 1.5; }
 
     // Largest half-extent of a building's footprint by kind. Used by Combat
